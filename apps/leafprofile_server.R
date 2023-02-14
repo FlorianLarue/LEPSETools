@@ -4,6 +4,9 @@ df.lp.init.o <- reactiveVal()
 df.lp <- reactiveVal()
 df.changes <- reactiveVal(data.frame())
 df.changes.f <- reactiveVal(data.frame())
+lp.var.c <- reactiveVal()
+lp.irrig.c <- reactiveVal()
+lp.semis.c <- reactiveVal()
 
 # Functions
 updateHistory <- function(v, s, i, d, r, a) {
@@ -23,6 +26,18 @@ observeEvent(input$leafprofiledf,{
   df.input$sel <- 16
   df.lp.init(df.input)
   df.lp.init.o(df.input)
+})
+
+observeEvent(input$leafprofilevar, {
+  lp.var.c(input$leafprofilevar)
+})
+
+observeEvent(input$leafprofileirrig, {
+  lp.irrig.c(input$leafprofileirrig)
+})
+
+observeEvent(input$leafprofilesemis, {
+  lp.semis.c(input$leafprofilesemis)
 })
 
 observeEvent(listen.lp.sel(), {
@@ -240,6 +255,10 @@ observeEvent(input$saveChanges, {
                  df.org$Semis == input$leafprofilesemis),] <- df.lp()
   df.lp.init(df.org)
   df.changes.f(df.changes())
+  updateSelectizeInput(session, "leafprofilevar", selected = lp.var.c())
+  updateSelectizeInput(session, "leafprofileirrig", selected = lp.irrig.c())
+  updateSelectizeInput(session, "leafprofilesemis", selected = lp.semis.c())
+  
 })
 
 observeEvent(input$reset, {
@@ -272,6 +291,24 @@ observeEvent(input$nextS, {
       updateSelectizeInput(session, "leafprofilevar", 
         selected = unique(df.lp.init()$Variety)[currentVar + 1])
       updateSelectizeInput(session, "leafprofileirrig", selected = "WD")
+    }
+  }
+})
+
+observeEvent(input$previousS, {
+  req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
+      input$leafprofilesemis) 
+  if(input$leafprofilesemis == "S1") { # case 1 : change only sowing
+    updateSelectizeInput(session, "leafprofilesemis", selected = "S2")
+  } else { # case 2 : change irrig and sowing
+    updateSelectizeInput(session, "leafprofilesemis", selected = "S1")
+    if(input$leafprofileirrig == "WW") { 
+      updateSelectizeInput(session, "leafprofileirrig", selected = "WD")
+    } else { # case 3 : change irrig, sowing and var  
+      currentVar <- match(input$leafprofilevar, unique(df.lp.init()$Variety))
+      updateSelectizeInput(session, "leafprofilevar", 
+        selected = unique(df.lp.init()$Variety)[currentVar + - 1])
+      updateSelectizeInput(session, "leafprofileirrig", selected = "WW")
     }
   }
 })
