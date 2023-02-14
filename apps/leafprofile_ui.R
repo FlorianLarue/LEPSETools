@@ -1,5 +1,4 @@
 tabItem(tabName = "leafprofile",
-  useShinyalert(),
   shinydashboardPlus::box(title="Data", width=12, status="info",
     fileInput("leafprofiledf","Import data"),
     splitLayout(
@@ -9,6 +8,10 @@ tabItem(tabName = "leafprofile",
       uiOutput("lp.selVar"),
       uiOutput("lp.selIrrig"),
       uiOutput("lp.selSemis")
+    ),
+    column(width=12, align="center",
+      actionButton("previousS", "Previous"),
+      actionButton("nextS", "Next")
     )
   ),
   shinydashboardPlus::box(title="Visualization", height="100%", 

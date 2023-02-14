@@ -258,6 +258,24 @@ observeEvent(input$resetall, {
   df.changes.f(data.frame())
 })
 
+observeEvent(input$nextS, {
+  req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
+      input$leafprofilesemis) 
+  if(input$leafprofilesemis == "S2") { # case 1 : change only sowing
+    updateSelectizeInput(session, "leafprofilesemis", selected = "S1")
+  } else { # case 2 : change irrig and sowing
+    updateSelectizeInput(session, "leafprofilesemis", selected = "S2")
+    if(input$leafprofileirrig == "WD") { 
+      updateSelectizeInput(session, "leafprofileirrig", selected = "WW")
+    } else { # case 3 : change irrig, sowing and var
+      currentVar <- match(input$leafprofilevar, unique(df.lp.init()$Variety))
+      updateSelectizeInput(session, "leafprofilevar", 
+        selected = unique(df.lp.init()$Variety)[currentVar + 1])
+      updateSelectizeInput(session, "leafprofileirrig", selected = "WD")
+    }
+  }
+})
+
 observeEvent(input$revert, {
   req(input$changes.df_rows_selected)
   df.tmp <- df.lp()
