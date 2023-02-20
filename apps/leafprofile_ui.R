@@ -45,6 +45,9 @@ tabItem(tabName = "leafprofile",
            actionButton("revert", label="Revert selected changes"),
            downloadButton("downloadHistory", "Download history"),
            DT::dataTableOutput("changes.df")
+    ),
+    column(width=6, align="center",
+           plotOutput("pp.plot", height="100%", click="plot_click2")
     )
   )
 )

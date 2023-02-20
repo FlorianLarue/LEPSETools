@@ -48,6 +48,7 @@ observeEvent(listen.lp.sel(), {
 })
 
 observeEvent(input$plot_click, {
+  date.tmp <- NA
   df.tmp <- nearPoints(df.lp(), input$plot_click, allRows=TRUE)
   for(v in unique(df.tmp$Variety)) {
     for(i in unique(df.tmp$Irrigation)) {
@@ -62,10 +63,12 @@ observeEvent(input$plot_click, {
               df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i &
                              df.tmp$Semis == s & df.tmp$Date_de_plv == d),
                      "sel"] <- 16
+              date.tmp <- NA
             } else {
               df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i &
                              df.tmp$Semis == s & df.tmp$Date_de_plv == d),
                      "sel"] <- 13
+              date.tmp <- d
             }
           }
         }
@@ -86,6 +89,31 @@ observeEvent(input$plot_click, {
   
   df.tmp <- df.tmp[,-c(ncol(df.tmp))]
   df.lp(df.tmp)
+  
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+  if(!is.na(date.tmp)) {
+    output$pp.plot <- renderPlot({
+      df.pp <- df.lp()
+      df.pp <- df.pp[which(df.pp$Variety == input$leafprofilevar & 
+                             df.pp$Irrigation == input$leafprofileirrig &
+                             df.pp$Semis == input$leafprofilesemis &
+                             df.pp$Date_de_plv == date.tmp),]
+      df.tmp2 <- df.pp %>%
+        summarise(nbmax = mean(nbmaxleaves, na.rm=T))
+      
+      ggplot(df.pp, aes(x = leafrank, y = areal, col = N_Plante)) + 
+        geom_line() + xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+        scale_x_continuous(breaks = function(x)
+          unique(floor(pretty(seq(0, (max(df.pp$leafrank,
+                                          na.rm=T)+1)*1.1))))) +
+        geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                   linetype = "dashed", col="red") +
+        theme(legend.position="bottom", legend.title = element_blank(),
+              legend.text = element_text(size=6))
+      
+    }, height = 500, res = 150)
+  }
+  
 })
 
 observeEvent(input$leftshift, {
