@@ -101,17 +101,18 @@ observeEvent(input$plot_click, {
       df.tmp2 <- df.pp %>%
         summarise(nbmax = mean(nbmaxleaves, na.rm=T))
       
-      ggplot(df.pp, aes(x = leafrank, y = areal, col = N_Plante)) + 
-        geom_line() + xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+      ggplot(df.pp, aes(x = leafrank, y = areal, col = as.factor(N_Plante))) + 
+        geom_line() + geom_point() + 
+        xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
         scale_x_continuous(breaks = function(x)
           unique(floor(pretty(seq(0, (max(df.pp$leafrank,
                                           na.rm=T)+1)*1.1))))) +
         geom_vline(data=df.tmp2, aes(xintercept=nbmax),
                    linetype = "dashed", col="red") +
-        theme(legend.position="bottom", legend.title = element_blank(),
-              legend.text = element_text(size=6))
-      
+        theme(legend.position = "none")
     }, height = 500, res = 150)
+  } else {
+    output$pp.plot <- NULL
   }
   
 })
@@ -255,9 +256,7 @@ observeEvent(df.lp(), {
       geom_vline(data=df.tmp2, aes(xintercept=nbmax),
                  linetype = "dashed", col="red") +
       guides(shape = "none") + 
-      theme(legend.position="bottom", legend.title = element_blank(),
-            legend.text = element_text(size=6))
-    
+      theme(legend.position = "none")
   }, height = 500, res = 150)
 })
 
