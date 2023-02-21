@@ -36,8 +36,11 @@ tabItem(tabName = "leafprofile",
           actionButton("pp.reset", label="Reset"),
           plotOutput("pp.plot", height="100%", click="plot_click2")
         ),
-        column(width=12, align="center",
-          uiOutput("lp.selRank")
+        column(width=6, align="center",
+          uiOutput("lp.selRank"),
+        ),
+        column(width=6, align="center",
+          uiOutput("lp.selPlant"),
         )
       ),
       shinydashboardPlus::box(title="History", height="100%", width=12, 

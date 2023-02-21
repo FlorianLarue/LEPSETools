@@ -93,7 +93,7 @@ observeEvent(input$plot_click, {
   output$lp.selRank <- renderUI({
     div(selectizeInput(inputId = "leafprofilerank", 
                        label = "Select a leaf rank",
-                       width = "25%",
+                       width = "100%",
                        choices = df.tmp[which(df.tmp$sel == 13 & 
                                                 !is.na(df.tmp$areal) &
                                                 !is.na(df.tmp$leafrank)),
@@ -115,17 +115,30 @@ observeEvent(input$plot_click, {
                              df.pp$Date_de_plv == date.sel()),]
       df.tmp2 <- df.pp %>%
         summarise(nbmax = mean(nbmaxleaves, na.rm=T))
-      
       ggplot(df.pp, aes(x = leafrank, y = areal, col = as.factor(N_Plante))) + 
         geom_line() + geom_point(shape=df.pp$sel.p) + 
         xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
         scale_x_continuous(breaks = function(x)
-          unique(floor(pretty(seq(0, (max(df.pp$leafrank,
+          unique(floor(pretty(seq(0, (max(df.tmp2$nbmax,
                                           na.rm=T)+1)*1.1))))) +
         geom_vline(data=df.tmp2, aes(xintercept=nbmax),
                    linetype = "dashed", col="red") +
-        theme(legend.position = "none")
+        guides(shape="none", col=guide_legend(nrow=2)) +
+        theme(legend.position = "bottom", legend.title = element_blank(),
+              legend.text = element_text(size=6))
     }, height = 500, res = 150)
+    
+    # Create output to allow for plant selection and deletion
+    output$lp.selPlant <- renderUI({
+      div(selectizeInput(inputId = "leafprofileplant", 
+                         label = "Select a plant number",
+                         width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$areal) &
+                                                  !is.na(df.tmp$leafrank)),
+                                          "N_Plante"]),
+          actionButton("delplant", label="Delete plant", icon=icon("trash")))
+    })
   } else {
     output$pp.plot <- NULL
   }
@@ -301,8 +314,9 @@ observeEvent(df.lp(), {
                                         na.rm=T)+1)*1.1))))) +
       geom_vline(data=df.tmp2, aes(xintercept=nbmax),
                  linetype = "dashed", col="red") +
-      guides(shape = "none") + 
-      theme(legend.position = "none")
+      guides(shape="none", col=guide_legend(nrow=2)) +
+      theme(legend.position = "bottom", legend.title = element_blank(),
+            legend.text = element_text(size=6))
   }, height = 500, res = 150)
 })
 
