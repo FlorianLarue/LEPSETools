@@ -33,7 +33,7 @@ tabItem(tabName = "leafprofile",
           actionButton("pp.rightshift", label=div("Shift right", 
                                                   icon("arrow-right"))),
           actionButton("pp.inverse", label="Inverse"),
-          actionButton("pp.reset", label="Reset"),
+          actionButton("pp.isolate", label="Isolate"),
           plotOutput("pp.plot", height="100%", click="plot_click2")
         ),
         column(width=6, align="center",
