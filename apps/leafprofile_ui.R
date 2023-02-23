@@ -19,8 +19,9 @@ tabItem(tabName = "leafprofile",
           actionButton("nextS", "Next")
         )
       ),
-      shinydashboardPlus::box(title="Visualization", height="100%", 
-        width=12, status = "success",
+      shinydashboardPlus::box(
+        title=div("Visualization", downloadBttn("downloadPlots", "")), 
+        height="100%", width=12, status = "success",
         column(width=6, align="center",
           actionButton("leftshift", label= div(icon("arrow-left"), "Shift left")),
           actionButton("rightshift", label=div("Shift right", icon("arrow-right"))),

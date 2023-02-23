@@ -621,3 +621,22 @@ output$downloadHistory <- downloadHandler(
     write.csv(df.changes.f(), file, row.names = FALSE)
   }
 )
+
+output$downloadPlots <- downloadHandler(
+  filename = function() {
+    "leafprofilePlots.pdf"
+  },
+  content = function(file) {
+    pdf(file)
+    for(v in unique(df.lp.init()$Variety)) {
+      df.tmp <- df.lp.init()[which(df.lp.init()$Variety == v),]
+      plt <- ggplot(df.tmp, aes(x = leafrank, y = medianareal, 
+                                col = Date_de_plv)) +
+        geom_line() + geom_point() + 
+        facet_grid(Semis ~ Irrigation) + 
+        ggtitle(v)
+      print(plt)
+    }
+    dev.off()
+  }
+)
