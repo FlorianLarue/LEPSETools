@@ -9,6 +9,8 @@ lp.irrig.c <- reactiveVal()
 lp.semis.c <- reactiveVal()
 date.sel <- reactiveVal(NA)
 date.sel.p <- reactiveVal(NA)
+max.plants <- reactiveVal(0)
+max.leaves <- reactiveVal(0)
 
 # Functions
 updateHistory <- function(v, s, i, d, p, r, a) {
@@ -17,7 +19,6 @@ updateHistory <- function(v, s, i, d, p, r, a) {
                                             Plantnumber = p, Leafrank = r, 
                                             Action = a)))
 }
-
 updateLeafarea <- function(df, v, i, s, d) {
   df.tmp <- df[which(df$Variety == v & df$Irrigation == i & df$Semis == s &
                        df$Date_de_plv == d),]
@@ -36,6 +37,12 @@ updateLeafarea <- function(df, v, i, s, d) {
              df$Date_de_plv == d),] <- df.tmp
   return(df)
 }
+incr <- function(x) {
+  eval.parent(substitute(x <- x + 1))
+}
+decr <- function(x) {
+  eval.parent(substitute(x <- x - 1))
+}
 
 # Listeners
 listen.lp.sel <- reactive({
@@ -48,6 +55,8 @@ observeEvent(input$leafprofiledf,{
   df.input$sel <- 16
   df.input$sel.p <- 16
   df.input$iso <- 1
+  max.plants(max(df.input$N_Plante, na.rm=T))
+  max.leaves(max(df.input$leafrank, na.rm=T))
   df.lp.init(df.input)
   df.lp.init.o(df.input)
 })
@@ -227,7 +236,8 @@ observeEvent(input$pp.leftshift, {
   
   for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"N_Plante"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
-                  input$leafprofileirrig, date.sel(), i, "all", "Left shift")
+                  input$leafprofileirrig, date.sel(), as.character(i), "all", 
+                  "Left shift")
   }
   
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
@@ -261,7 +271,8 @@ observeEvent(input$pp.rightshift, {
   
   for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"N_Plante"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
-                  input$leafprofileirrig, date.sel(), i, "all", "Left shift")
+                  input$leafprofileirrig, date.sel(), as.character(i), "all", 
+                  "Right shift")
   }
   
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
@@ -306,7 +317,8 @@ observeEvent(input$pp.inverse, {
   
   for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"N_Plante"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
-                  input$leafprofileirrig, date.sel(), i, "all", "Inverse")
+                  input$leafprofileirrig, date.sel(), as.character(i), "all", 
+                  "Inverse")
   }
   
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
@@ -344,7 +356,7 @@ observeEvent(input$delplant, {
                            input$leafprofilesemis, date.sel())
   updateHistory(input$leafprofilevar, input$leafprofilesemis, 
                 input$leafprofileirrig, date.sel(), 
-                as.character(input$leafprofileplant),"all", "Delete")
+                as.character(input$leafprofileplant), "all", "Delete")
   df.lp(df.tmp)
 })
 
@@ -494,94 +506,49 @@ observeEvent(input$previousS, {
 observeEvent(input$revert, {
   req(input$changes.df_rows_selected)
   output$lp.selRank <- NULL
-  output$lp.selPlant <- NULL
-  output$pp.plot <- NULL
   df.tmp <- df.lp()
-  for(i in input$changes.df_rows_selected) {
-    if(df.changes()[i,"Action"] == "Left shift") {
-      df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                   df.tmp$Semis == df.changes()[i,"Sowing"] &
-                   df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                   df.tmp$Date_de_plv == df.changes()[i,"Date"]),"leafrank"] <-
-      df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                   df.tmp$Semis == df.changes()[i,"Sowing"] &
-                   df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                   df.tmp$Date_de_plv == df.changes()[i,"Date"]),"leafrank"] + 1
-    } else if(df.changes()[i,"Action"] == "Right shift") {
-      df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                   df.tmp$Semis == df.changes()[i,"Sowing"] &
-                   df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                   df.tmp$Date_de_plv == df.changes()[i,"Date"]),"leafrank"] <-
-      df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                   df.tmp$Semis == df.changes()[i,"Sowing"] &
-                   df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                   df.tmp$Date_de_plv == df.changes()[i,"Date"]),"leafrank"] -1
-    } else if(df.changes()[i,"Action"] == "Delete") {
-      df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                   df.tmp$Semis == df.changes()[i,"Sowing"] &
-                   df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                   df.tmp$Date_de_plv == df.changes()[i,"Date"] & 
-                   df.tmp$leafrank == df.changes()[i,"Leafrank"]),] <-
-      df.lp.init()[which(df.lp.init()$Variety == df.changes()[i,"Variety"] &
-                       df.lp.init()$Semis == df.changes()[i,"Sowing"] &
-                       df.lp.init()$Irrigation == df.changes()[i,"Irrigation"] &
-                       df.lp.init()$Date_de_plv == df.changes()[i,"Date"] & 
-                       df.lp.init()$leafrank == df.changes()[i,"Leafrank"]),]
-    } else if(df.changes()[i,"Action"] == "Inverse") {
-      for(j in unique(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                     df.tmp$Semis == df.changes()[i,"Sowing"] &
-                     df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                     df.tmp$Date_de_plv == df.changes()[i,"Date"]),
-                     "N_Plante"])) {
-        df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                       df.tmp$Semis == df.changes()[i,"Sowing"] &
-                       df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                       df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                       df.tmp$N_Plante == j),"leafrank"] <- 
-          rev(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                             df.tmp$Semis == df.changes()[i,"Sowing"] &
-                             df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                             df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                             df.tmp$N_Plante == j),"leafrank"])
-      }
-      for(k in unique(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                      df.tmp$Semis == df.changes()[i,"Sowing"] &
-                      df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                      df.tmp$Date_de_plv == df.changes()[i,"Date"]),
-                      "leafrank"])) {
-        df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                       df.tmp$Semis == df.changes()[i,"Sowing"] &
-                       df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                       df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                       df.tmp$leafrank == k), "meanareal"] <-
-          mean(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                            df.tmp$Semis == df.changes()[i,"Sowing"] &
-                            df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                            df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                            df.tmp$leafrank == k), "areal"], na.rm=T)
-        df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                       df.tmp$Semis == df.changes()[i,"Sowing"] &
-                       df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                       df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                       df.tmp$leafrank == k), "medianareal"] <-
-          median(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                  df.tmp$Semis == df.changes()[i,"Sowing"] &
-                  df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                  df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                  df.tmp$leafrank == k), "areal"], na.rm=T)
-        df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                       df.tmp$Semis == df.changes()[i,"Sowing"] &
-                       df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                       df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                       df.tmp$leafrank == k), "sdareal"] <-
-          sd(df.tmp[which(df.tmp$Variety == df.changes()[i,"Variety"] &
-                          df.tmp$Semis == df.changes()[i,"Sowing"] &
-                          df.tmp$Irrigation == df.changes()[i,"Irrigation"] &
-                          df.tmp$Date_de_plv == df.changes()[i,"Date"] &
-                          df.tmp$leafrank == k), "areal"], na.rm=T)
-        
+  for(r in input$changes.df_rows_selected) {
+    v <- df.changes()[r, "Variety"]; s <- df.changes()[r, "Sowing"]
+    i <- df.changes()[r, "Irrigation"]; d <- df.changes()[r, "Date"]
+    p <- df.changes()[r, "Plantnumber"]; l <- df.changes()[r, "Leafrank"]
+    if(p == "all") p <- 1:max.plants()
+    if(l == "all") l <- 1:max.leaves()
+    a <- df.changes()[r, "Action"]
+    
+    if(a == "Left shift") {
+      incr(df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i & 
+                   df.tmp$Semis == s & df.tmp$Date_de_plv == d & 
+                   df.tmp$N_Plante %in% p), "leafrank"])
+    } else if(a == "Right shift") {
+      decr(df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i & 
+                     df.tmp$Semis == s & df.tmp$Date_de_plv == d & 
+                     df.tmp$N_Plante %in% p), "leafrank"])
+    } else if(a == "Delete") {
+      df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i & 
+                   df.tmp$Semis == s & df.tmp$Date_de_plv == d &
+                   df.tmp$N_Plante %in% p & df.tmp$leafrank %in% l),] <-
+      df.lp.init()[which(df.lp.init()$Variety == v & 
+                         df.lp.init()$Irrigation == i & 
+                         df.lp.init()$Semis == s & 
+                         df.lp.init()$Date_de_plv == d &
+                         df.lp.init()$N_Plante %in% p &
+                         df.lp.init()$leafrank %in% l),]
+    } else if(a == "Inverse") {
+      for(n in unique(df.tmp[which(df.tmp$Variety==v & df.tmp$Irrigation == i & 
+                                   df.tmp$Semis==s & df.tmp$Date_de_plv == d &
+                                   df.tmp$N_Plante %in% p), "N_Plante"])) {
+        df.tmp[which(df.tmp$Variety == v & df.tmp$Irrigation == i & 
+                     df.tmp$Semis == s & df.tmp$Date_de_plv == d &
+                     df.tmp$N_Plante == n),] <-
+        df.lp.init()[which(df.lp.init()$Variety == v & 
+                           df.lp.init()$Irrigation == i & 
+                           df.lp.init()$Semis == s & 
+                           df.lp.init()$Date_de_plv == d & 
+                           df.lp.init()$N_Plante == n),]
       }
     }
+    
+    df.tmp <- updateLeafarea(df.tmp, v, i, s, d)
   }
   df.changes(df.changes()[-input$changes.df_rows_selected,])
   df.lp(df.tmp)

@@ -1,11 +1,12 @@
 tabItem(tabName = "leafprofile",
   tabsetPanel(type = "tabs",
     tabPanel("Settings", br(),
-      "Test"
+      shinydashboardPlus::box(title="Data", width=12, status="info",
+        fileInput("leafprofiledf","Import data")
+      )
     ),
     tabPanel("Analysis", br(),
       shinydashboardPlus::box(title="Data", width=12, status="info",
-        fileInput("leafprofiledf","Import data"),
         splitLayout(
           tags$head(tags$style(
             HTML(".shiny-split-layout > div {overflow: visible;}"))),
