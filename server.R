@@ -20,6 +20,8 @@ library(ggplot2)
 library(shinycssloaders)
 library(dplyr)
 
+#options(warn=-1)
+
 ##---------------------------------------------------------------
 ##    Define the Server behavior of the LEPSEtool Shiny App     -
 ##---------------------------------------------------------------

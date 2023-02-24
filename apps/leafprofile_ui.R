@@ -1,8 +1,32 @@
 tabItem(tabName = "leafprofile",
   tabsetPanel(type = "tabs",
     tabPanel("Settings", br(),
-      shinydashboardPlus::box(title="Data", width=12, status="info",
+      shinydashboardPlus::box(title="Data import", width=12, status="info",
         fileInput("leafprofiledf","Import data")
+      ),
+      shinydashboardPlus::box(title="Select column names", width=12, 
+                              status="success",
+        splitLayout(
+          textInput("cn.Variety", "Variety", value = "Variety"),
+          textInput("cn.Sowing", "Sowing", value = "Semis"),
+          textInput("cn.Irrigation", "Irrigation", value = "Irrigation")
+        ),
+        splitLayout(
+          textInput("cn.Date", "Date", value="Date_de_plv"),
+          textInput("cn.Leafrank", "Leaf rank", value="leafrank"),
+          textInput("cn.Leafarea", "Leaf area", value="areal")
+        ),
+        splitLayout(
+          textInput("cn.Medianarea", "Median area", value="medianareal"),
+          textInput("cn.Meanarea", "Mean area", value="meanareal"),
+          textInput("cn.SDarea", "Sd area", value="sdareal")
+        ),
+        splitLayout(
+          textInput("cn.PlantNb", "Plant number", value="N_Plante"),
+          textInput("cn.LeafNb", "Leaf number", value="N_Feuille"),
+          textInput("cn.MaxLeaves", "Max number of leaves", value="nbmaxleaves")
+        ),
+        actionButton("cn.Submit", "Submit")
       )
     ),
     tabPanel("Analysis", br(),
@@ -11,9 +35,12 @@ tabItem(tabName = "leafprofile",
           tags$head(tags$style(
             HTML(".shiny-split-layout > div {overflow: visible;}"))),
           cellWidths = c("0%","33%","33%","33%"),
-          uiOutput("lp.selVar"),
-          uiOutput("lp.selIrrig"),
-          uiOutput("lp.selSemis")
+          selectizeInput("leafprofilevar", "Select a variety", 
+                         choices=NULL),
+          selectizeInput("leafprofileirrig", "Select an irrigation", 
+                         choices=NULL),
+          selectizeInput("leafprofilesemis", "Select a sowing",
+                         choices=NULL)
         ),
         column(width=12, align="center",
           actionButton("previousS", "Previous"),
