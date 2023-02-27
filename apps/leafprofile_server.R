@@ -437,9 +437,20 @@ observeEvent(df.lp(), {
     df.tmp$Date <- as.factor(df.tmp$Date)
     df.tmp2 <- df.tmp %>%
       summarise(nbmax = mean(MaxLeaves, na.rm=T))
-    ggplot(df.lp(), aes(x = Leafrank, y = Medianarea, 
-                        col = Date)) +
-      geom_point(shape=df.lp()$sel) + geom_line() +
+    if(input$meanmedian == "Median") {
+      plt <- ggplot(df.lp(), aes(x = Leafrank, y = Medianarea, col = Date))
+      if(input$sduse) {
+        plt <- plt + geom_errorbar(aes(ymin=Medianarea-SDarea, 
+                                       ymax=Medianarea+SDarea))
+      }
+    } else {
+      plt <- ggplot(df.lp(), aes(x = Leafrank, y = Meanarea, col = Date))
+      if(input$sduse) {
+        plt <- plt + geom_errorbar(aes(ymin=Meanarea-SDarea, 
+                                       ymax=Meanarea+SDarea))
+      }
+    }
+    plt <- plt + geom_point(shape=df.lp()$sel) + geom_line() +
       xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
       scale_x_continuous(breaks = function(x)
         unique(floor(pretty(seq(0, (max(df.lp()$Leafrank,
@@ -449,6 +460,7 @@ observeEvent(df.lp(), {
       guides(shape="none", col=guide_legend(nrow=2)) +
       theme(legend.position = "bottom", legend.title = element_blank(),
             legend.text = element_text(size=6))
+      plt
   }, height = 500, res = 150)
 })
 
