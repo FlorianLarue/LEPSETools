@@ -203,13 +203,15 @@ observeEvent(input$plot_click, {
     # Create output to allow for plant selection and deletion
     output$lp.selPlant <- renderUI({
       div(selectizeInput(inputId = "leafprofileplant", 
-                         label = "Select a plant number",
+                         label = "Select a plant or leaf number",
                          width = "100%",
-                         choices = df.tmp[which(df.tmp$sel == 13 & 
-                                                  !is.na(df.tmp$Leafarea) &
-                                                  !is.na(df.tmp$Leafrank)),
-                                          "PlantNb"]),
-          actionButton("delplant", label="Delete plant", icon=icon("trash")))
+                         choices = sort(unique(unlist(
+                           df.tmp[which(df.tmp$Date == date.sel() & 
+                                        !is.na(df.tmp$Leafarea) &
+                                        !is.na(df.tmp$Leafrank)),
+                                  c("PlantNb","Leafrank")])))),
+          actionButton("delplant", label="Delete plant", icon=icon("trash")),
+          actionButton("delleaf", label="Delete leaf", icon=icon("trash")))
     })
   } else {
     output$pp.plot <- NULL
@@ -401,6 +403,27 @@ observeEvent(input$delplant, {
                 input$leafprofileirrig, date.sel(), 
                 as.character(input$leafprofileplant), "all", "Delete")
   df.lp(df.tmp)
+})
+
+observeEvent(input$delleaf, {
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis,
+      input$leafprofileplant)
+  df.tmp <- df.lp()
+  if(nrow(df.tmp[which(df.tmp$Date == date.sel() & df.tmp$sel.p == 13 &
+                       df.tmp$Leafrank == input$leafprofileplant & 
+                       !is.na(df.tmp$Leafarea)),]) > 0) {
+    df.tmp[which(df.tmp$Date == date.sel() & df.tmp$sel.p == 13 &
+                   df.tmp$Leafrank == input$leafprofileplant),
+           c("Medianarea","Meanarea","SDarea","Leafarea")] <- c(NA,NA,NA,NA)
+    df.tmp <- updateLeafarea(df.tmp, input$leafprofilevar, input$leafprofileirrig, 
+                             input$leafprofilesemis, date.sel())
+    for(p in unique(df.tmp[which(df.tmp$sel.p == 13),"PlantNb"])) {
+      updateHistory(input$leafprofilevar, input$leafprofilesemis, 
+                    input$leafprofileirrig, date.sel(), 
+                    p, as.character(input$leafprofileplant), "Delete") 
+    }
+    df.lp(df.tmp)
+  }
 })
 
 observeEvent(input$pp.isolate, {
