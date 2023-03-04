@@ -391,7 +391,8 @@ observeEvent(input$delplant, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis,
       input$leafprofileplant)
   df.tmp <- df.lp()
-  df.tmp[which(df.tmp$sel == 13 & df.tmp$PlantNb == input$leafprofileplant),
+  df.tmp[which(df.tmp$Date == date.sel() & 
+                 df.tmp$PlantNb == input$leafprofileplant),
          c("Medianarea","Meanarea","SDarea","Leafarea")] <- c(NA,NA,NA,NA)
   
   df.tmp <- updateLeafarea(df.tmp, input$leafprofilevar, input$leafprofileirrig, 
