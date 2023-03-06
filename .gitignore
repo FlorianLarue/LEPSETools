@@ -38,5 +38,5 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# Tmp files
-data/tmp/*
+# Data files
+/data/
