@@ -2,7 +2,11 @@ tabItem(tabName = "leafprofile",
   tabsetPanel(type = "tabs",
     tabPanel("Settings", br(),
       shinydashboardPlus::box(title="Data import", width=12, status="info",
-        fileInput("leafprofiledf","Import data")
+        fileInput("leafprofiledf","Import data"),
+        shinyFiles::shinyDirButton("savePath", 
+                                   "Select a folder to save tmp file", 
+                                   "Path to directory of tmp file", 
+                                   FALSE)
       ),
       shinydashboardPlus::box(title="Dataframe settings", width=12, 
                               status="success",

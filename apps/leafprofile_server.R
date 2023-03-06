@@ -11,6 +11,8 @@ col.names <- reactiveVal(
     "Meanarea","SDarea","PlantNb","LeafNb","MaxLeaves")
 )
 col.user <- reactiveVal()
+path.save <- reactiveVal()
+volumes <- getVolumes()()
 
 # Functions
 updateHistory <- function(v, s, i, d, p, r, a) {
@@ -50,6 +52,14 @@ listen.lp.sel <- reactive({
 })
 
 # Observers
+observe({
+  shinyDirChoose(input, id="savePath", roots=volumes, session = session)
+  tmp.path <- parseDirPath(roots=volumes, input$savePath)
+  if(!identical(tmp.path, character(0))) {
+    path.save(paste0(tmp.path,"/", Sys.Date(), "_tmp_save.csv"))
+  }
+})
+
 observeEvent(input$leafprofiledf,{
   df.input <- data.frame(fread(input$leafprofiledf$datapath))
   df.input$sel <- 16
@@ -509,6 +519,10 @@ observeEvent(input$saveChanges, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   output$lp.selPlant <- NULL
   output$pp.plot <- NULL
+  df.tmp <- df.lp()
+  df.tmp[which(df.tmp$sel == 13), "sel"] <- 16
+  df.tmp[which(df.tmp$sel.p == 13), "sel"] <- 16
+  df.lp(df.tmp)
   df.org <- df.lp.init()
   df.org[which(df.org$Variety == input$leafprofilevar &
                  df.org$Irrigation == input$leafprofileirrig &
@@ -524,6 +538,10 @@ observeEvent(input$saveChanges, {
   updateSelectizeInput(session, "leafprofilesemis", 
                        choices = unique(df.lp.init.o()$Sowing),
                        selected = lp.semis.c())
+  if(is.character(path.save()) && length(path.save() == 1L && 
+                                         !is.na(path.save()))) {
+    fwrite(df.lp.init(), path.save())
+  }
 })
 
 observeEvent(input$reset, {
