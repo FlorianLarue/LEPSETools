@@ -56,7 +56,7 @@ observe({
   shinyDirChoose(input, id="savePath", roots=volumes, session = session)
   tmp.path <- parseDirPath(roots=volumes, input$savePath)
   if(!identical(tmp.path, character(0))) {
-    path.save(paste0(tmp.path,"/", Sys.Date(), "_tmp_save.csv"))
+    path.save(paste0(tmp.path,"/", Sys.Date()))
   }
 })
 
@@ -540,7 +540,10 @@ observeEvent(input$saveChanges, {
                        selected = lp.semis.c())
   if(is.character(path.save()) && length(path.save() == 1L && 
                                          !is.na(path.save()))) {
-    fwrite(df.lp.init(), path.save())
+    fwrite(df.lp.init(), paste0(path.save(), "_tmp_save_",
+                                input$leafprofiledf$name))
+    fwrite(df.changes.f(), paste0(path.save(), "_tmp_history_", 
+                                  input$leafprofiledf$name))
   }
 })
 
