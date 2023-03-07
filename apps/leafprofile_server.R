@@ -709,9 +709,14 @@ output$downloadPlots <- downloadHandler(
     pdf(file)
     for(v in unique(df.lp.init()$Variety)) {
       df.tmp <- df.lp.init()[which(df.lp.init()$Variety == v),]
+      df.tmp2 <- df.tmp %>%
+        group_by(Sowing) %>%
+        summarise(nbmax = mean(MaxLeaves, na.rm=T))
       plt <- ggplot(df.tmp, aes(x = Leafrank, y = Medianarea, 
                                 col = Date)) +
         geom_line() + geom_point() + 
+        geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                   linetype = "dashed", col="red") +
         facet_grid(Sowing ~ Irrigation) + 
         ggtitle(v)
       suppressWarnings(print(plt))
