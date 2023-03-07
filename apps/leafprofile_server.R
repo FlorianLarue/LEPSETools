@@ -274,6 +274,7 @@ observeEvent(input$leftshift, {
   df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
   df.lp(df.tmp)
   output$lp.selRank <- NULL
+  output$pp.plot <- NULL
 })
 
 observeEvent(input$pp.leftshift, {
@@ -309,6 +310,7 @@ observeEvent(input$rightshift, {
   df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
   df.lp(df.tmp)
   output$lp.selRank <- NULL
+  output$pp.plot <- NULL
 })
 
 observeEvent(input$pp.rightshift, {
