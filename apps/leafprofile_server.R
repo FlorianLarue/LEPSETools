@@ -279,12 +279,13 @@ observeEvent(input$leftshift, {
 observeEvent(input$pp.leftshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
-  df.tmp[which(df.tmp$sel.p == 13),"Leafrank"] <-  
-    df.tmp[which(df.tmp$sel.p == 13),"Leafrank"] - 1
+  df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),"Leafrank"] <-  
+    df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),"Leafrank"] - 1
   
   df.tmp <- updateLeafarea(df.tmp, input$leafprofilevar, input$leafprofileirrig,
                            input$leafprofilesemis, date.sel())
-  for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"PlantNb"])) {
+  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),
+                         "PlantNb"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
                   input$leafprofileirrig, date.sel(), as.character(i), "all", 
                   "Left shift")
@@ -313,12 +314,13 @@ observeEvent(input$rightshift, {
 observeEvent(input$pp.rightshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
-  df.tmp[which(df.tmp$sel.p == 13),"Leafrank"] <-  
-    df.tmp[which(df.tmp$sel.p == 13),"Leafrank"] + 1
+  df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),"Leafrank"] <-  
+    df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),"Leafrank"] + 1
   
   df.tmp <- updateLeafarea(df.tmp, input$leafprofilevar, input$leafprofileirrig,
                            input$leafprofilesemis, date.sel())
-  for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"PlantNb"])) {
+  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),
+                         "PlantNb"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
                   input$leafprofileirrig, date.sel(), as.character(i), "all", 
                   "Right shift")
@@ -360,18 +362,22 @@ observeEvent(input$pp.inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
   
-  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$ligulated == "x"), 
+  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$ligulated == "x" & 
+                               df.tmp$Date == date.sel()), 
                          "PlantNb"])) {
     df.tmp[which(df.tmp$sel.p == 13 & df.tmp$PlantNb == i & 
-                 df.tmp$ligulated == "x"), "Leafrank"] <-
-      rev(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$PlantNb == i & 
-                       df.tmp$ligulated == "x"), "Leafrank"])
+                 df.tmp$ligulated == "x" & df.tmp$Date == date.sel()), 
+           "Leafrank"] <- rev(df.tmp[which(df.tmp$sel.p == 13 & 
+                                           df.tmp$PlantNb == i & 
+                                           df.tmp$ligulated == "x"), 
+                                     "Leafrank"])
   }
   
   df.tmp <- updateLeafarea(df.tmp, input$leafprofilevar, input$leafprofileirrig, 
                            input$leafprofilesemis, date.sel())
   
-  for(i in unique(df.tmp[which(df.tmp$sel.p == 13),"PlantNb"])) {
+  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Date == date.sel()),
+                         "PlantNb"])) {
     updateHistory(input$leafprofilevar, input$leafprofilesemis,
                   input$leafprofileirrig, date.sel(), as.character(i), "all", 
                   "Inverse")
