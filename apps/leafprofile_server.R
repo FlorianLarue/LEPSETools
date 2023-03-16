@@ -188,41 +188,44 @@ observeEvent(input$plot_click, {
   
   # Create output for per-plant plot
   if(!is.na(date.sel())) {
-    output$pp.plot <- renderPlot({
-      df.pp <- df.lp()
-      df.pp <- df.pp[which(df.pp$Variety == input$leafprofilevar & 
-                             df.pp$Irrigation == input$leafprofileirrig &
-                             df.pp$Sowing == input$leafprofilesemis &
-                             df.pp$Date == date.sel() & 
-                             df.pp$iso == 1),]
-      df.tmp2 <- df.pp %>%
-        summarise(nbmax = mean(MaxLeaves, na.rm=T))
-      ggplot(df.pp, aes(x = Leafrank, y = Leafarea, col = as.factor(PlantNb))) + 
-      geom_line() + geom_point(shape=df.pp$sel.p) + 
-      xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
-      scale_x_continuous(breaks = function(x)
-        unique(floor(pretty(seq(0, (max(df.tmp2$nbmax,
-                                        na.rm=T)+1)*1.1))))) +
-      geom_vline(data=df.tmp2, aes(xintercept=nbmax),
-                 linetype = "dashed", col="red") +
-      guides(shape="none", col=guide_legend(nrow=2)) +
-      theme(legend.position = "bottom", legend.title = element_blank(),
-            legend.text = element_text(size=6))
-    }, height = 500, res = 150)
-    
-    # Create output to allow for plant selection and deletion
-    output$lp.selPlant <- renderUI({
-      div(selectizeInput(inputId = "leafprofileplant", 
-                         label = "Select a plant or leaf number",
-                         width = "100%",
-                         choices = sort(unique(unlist(
-                           df.tmp[which(df.tmp$Date == date.sel() & 
-                                        !is.na(df.tmp$Leafarea) &
-                                        !is.na(df.tmp$Leafrank)),
-                                  c("PlantNb","Leafrank")])))),
-          actionButton("delplant", label="Delete plant", icon=icon("trash")),
-          actionButton("delleaf", label="Delete leaf", icon=icon("trash")))
-    })
+    if(input$ppplot) {
+      output$pp.plot <- renderPlot({
+        df.pp <- df.lp()
+        df.pp <- df.pp[which(df.pp$Variety == input$leafprofilevar & 
+                               df.pp$Irrigation == input$leafprofileirrig &
+                               df.pp$Sowing == input$leafprofilesemis &
+                               df.pp$Date == date.sel() & 
+                               df.pp$iso == 1),]
+        df.tmp2 <- df.pp %>%
+          summarise(nbmax = mean(MaxLeaves, na.rm=T))
+        ggplot(df.pp, aes(x = Leafrank, y = Leafarea, 
+                          col = as.factor(PlantNb))) + 
+          geom_line() + geom_point(shape=df.pp$sel.p) + 
+          xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+          scale_x_continuous(breaks = function(x)
+            unique(floor(pretty(seq(0, (max(df.tmp2$nbmax,
+                                            na.rm=T)+1)*1.1))))) +
+          geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                     linetype = "dashed", col="red") +
+          guides(shape="none", col=guide_legend(nrow=2)) +
+          theme(legend.position = "bottom", legend.title = element_blank(),
+                legend.text = element_text(size=6))
+      }, height = 500, res = 150)
+      
+      # Create output to allow for plant selection and deletion
+      output$lp.selPlant <- renderUI({
+        div(selectizeInput(inputId = "leafprofileplant", 
+                           label = "Select a plant or leaf number",
+                           width = "100%",
+                           choices = sort(unique(unlist(
+                             df.tmp[which(df.tmp$Date == date.sel() & 
+                                            !is.na(df.tmp$Leafarea) &
+                                            !is.na(df.tmp$Leafrank)),
+                                    c("PlantNb","Leafrank")])))),
+            actionButton("delplant", label="Delete plant", icon=icon("trash")),
+            actionButton("delleaf", label="Delete leaf", icon=icon("trash")))
+      })
+    }
   } else {
     output$pp.plot <- NULL
   }
