@@ -26,14 +26,26 @@ library(dplyr)
 
 shinyUI(
   ui = dashboardPage(
+    skin="green",
     header = dashboardHeader(
       title = "LEPSEtools"
     ),
     
     sidebar = dashboardSidebar(
       sidebarMenu(
+        br(),
+        div(img(src="logo.png", height=105, width=123), 
+            style="text-align: center;"
+        ), br(),
         menuItem("Home", tabName="home", icon=icon("home")),
-        menuItem("Leaf profile", tabName="leafprofile", icon=icon("seedling"))
+        menuItem("Leaf profile", tabName="leafprofile", icon=icon("seedling")),
+        menuItem("Phenodyn Monitor", tabName="dashboard", 
+          icon=icon("dashboard"),
+          menuSubItem("Import data", tabName="importdata", 
+                      icon=icon("file-import")),
+          menuSubItem("Export data", tabName="exportdata", 
+                      icon=icon("file-export"))
+        )
       )
     ),
     
@@ -42,7 +54,8 @@ shinyUI(
         tabItem(tabName = "home",
           h2("Home")
         ),
-        source("./apps/leafprofile_ui.R", local=TRUE)$value
+        source("./apps/leafprofile_ui.R", local=TRUE)$value,
+        source("./apps/phenodynmonitor_ui.R", local=TRUE)$value
       )
     ),
     
