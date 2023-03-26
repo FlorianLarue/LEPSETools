@@ -38,14 +38,16 @@ shinyUI(
             style="text-align: center;"
         ), br(),
         menuItem("Home", tabName="home", icon=icon("home")),
-        menuItem("Leaf profile", tabName="leafprofile", icon=icon("seedling")),
+        menuItem("Leaf Profile", tabName="leafprofile", icon=icon("seedling")),
         menuItem("Phenodyn Monitor", tabName="dashboard", 
           icon=icon("dashboard"),
           menuSubItem("Import data", tabName="importdata", 
                       icon=icon("file-import")),
           menuSubItem("Export data", tabName="exportdata", 
-                      icon=icon("file-export"))
-        )
+                      icon=icon("file-export")),
+          menuSubItem("Messages", tabName="messagedata", icon=icon("message"))
+        ),
+        menuItem("About", tabName="about", icon=icon("user"))
       )
     ),
     
@@ -55,7 +57,19 @@ shinyUI(
           h2("Home")
         ),
         source("./apps/leafprofile_ui.R", local=TRUE)$value,
-        source("./apps/phenodynmonitor_ui.R", local=TRUE)$value
+        source("./apps/phenodynmonitor_ui.R", local=TRUE)$value,
+        tabItem(tabName = "about",
+          shinydashboardPlus::userBox(
+            title = shinydashboardPlus::userDescription(
+              title = "Florian Larue",
+              subtitle = "Postdoctoral researcher",
+              type = 1,
+              image = "florian.png",
+              backgroundImage = "bg_user.jpg"
+            ),
+            footer = "florian.larue@outlook.com"
+          )
+        )
       )
     ),
     
