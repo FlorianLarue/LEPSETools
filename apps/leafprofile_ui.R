@@ -52,6 +52,8 @@ tabItem(tabName = "leafprofile",
           radioButtons("meanmedian", "What metric to use in plots ?",
                        choices = c("Mean","Median"), selected = "Median"),
           checkboxInput("sduse", "Show standard deviation on plots ?",
+                        value=FALSE),
+          checkboxInput("ppplot", "Show individual plant plot ?",
                         value=FALSE)
         ),
         column(width=12, align="center",
