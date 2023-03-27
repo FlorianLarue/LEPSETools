@@ -9,11 +9,13 @@
 ##---------------------------------------------------------------
 ##    Define the Server behavior of the LEPSEtool Shiny App     -
 ##---------------------------------------------------------------
-enableBookmarking("server")
 
 shinyServer(function(input, output, session) {
   source("./apps/leafprofile_server.R", local=TRUE)
   source("./apps/phenodynmonitor_server.R", local=TRUE)
+  
+  vals <- reactiveValues()
+  vals$v1 <- NULL
   
   get_last_bookmark <- function() {
     list.files(path = 'shiny_bookmarks/') %>%
@@ -32,6 +34,10 @@ shinyServer(function(input, output, session) {
                           parseQueryString(sub("^.*\\?", "", url))$`_state_id_`, 
                           "input.rds"),
               new_path = path("shiny_bookmarks/latest/input.rds"))
+    file_move(path = path("shiny_bookmarks", 
+                          parseQueryString(sub("^.*\\?", "", url))$`_state_id_`, 
+                          "values.rds"),
+              new_path = path("shiny_bookmarks/latest/values.rds"))
     dir_delete(path("shiny_bookmarks", 
                     parseQueryString(sub("^.*\\?", "", url))$`_state_id_`))
   })
@@ -45,34 +51,31 @@ shinyServer(function(input, output, session) {
     session$reload()
   }, once = TRUE)
   
-  vals <- reactiveValues(sum = 0)
-  
   onBookmark(function(state) {
-    
+    state$values$currentMessages <- currentMessages$mes
   })
   
   onRestore(function(state) {
-    #updateTextInput(session, "testtext")
-    # for(i in 0:length(state$input$currentMessages)) {
-    #   if(i != 0) {
-    #     if(state$values$currentMessages[[i]][4] == "Info") {
-    #       tmpType <- "received"
-    #     } else {
-    #       tmpType <- "sent"
-    #     }
-    #     
-    #     shinydashboardPlus::updateUserMessages(
-    #       id = "pmmessages",
-    #       action = "add",
-    #       content = list(
-    #         author = state$values$currentMessages[[i]][1],
-    #         date = state$values$currentMessages[[i]][2],
-    #         image = "message.png",
-    #         type = tmpType,
-    #         text = state$values$currentMessages[[i]][3]
-    #       )
-    #     )
-    #   }
-    # }
+    for(i in 0:length(state$values$currentMessages)) {
+      if(i != 0) {
+        if(state$values$currentMessages[[i]][4] == "Info") {
+          tmpType <- "received"
+        } else {
+          tmpType <- "sent"
+        }
+
+        shinydashboardPlus::updateUserMessages(
+          id = "pmmessages",
+          action = "add",
+          content = list(
+            author = state$values$currentMessages[[i]][1],
+            date = state$values$currentMessages[[i]][2],
+            image = "message.png",
+            type = tmpType,
+            text = state$values$currentMessages[[i]][3]
+          )
+        )
+      }
+    }
   })
 })

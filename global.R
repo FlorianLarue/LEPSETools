@@ -16,4 +16,6 @@ library(data.table)
 library(DT)
 library(ggplot2)
 
+enableBookmarking("server")
+
 #options(warn=-1)

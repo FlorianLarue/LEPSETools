@@ -1,8 +1,8 @@
 currentMessages <- reactiveValues(mes = list())
+currentText <- reactiveVal()
 
 observeEvent(input$pm.send, {
-  vals$sum <- vals$sum + 1
-  print(vals$sum)
+  currentText("Hakuna Matata")
   req(input$pm.name, input$pm.message)
   if(input$pm.type == "Info") {
     tmpType <- "received"
