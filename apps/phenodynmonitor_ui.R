@@ -65,8 +65,25 @@ pm.tab3 <-  tabItem("messagedata",
     icon = icon("message"),
     width = 12,
     status = "success",
-    h5("Here you can write messages to leave for futur users")
+    h5("Here you can write messages to leave for futur users"),
+    splitLayout(
+      textInput("pm.name", "Name"),
+      dateInput("pm.date", "Date"),
+      selectInput("pm.type", "Type", choices = c("Info","Error"), 
+                  selected = "Info")
+    ),
+    textAreaInput("pm.message","Message"),
+    actionButton("pm.send", "Send message")
+  ),
+  shinydashboardPlus::box(
+    title = "Message history",
+    icon = icon("message"),
+    width = 12,
+    status = "info",
+    shinydashboardPlus::userMessages(
+      width = 6,
+      status = "danger",
+      id = "pmmessages"
+    )
   )
 )
-
-
