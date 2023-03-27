@@ -23,6 +23,8 @@ library(dplyr)
 ##----------------------------------------------------------------
 ##      Define the User Interface of the LEPSEtool Shiny App     -
 ##----------------------------------------------------------------
+source("./apps/leafprofile_ui.R", local=TRUE)
+source("./apps/phenodynmonitor_ui.R", local=TRUE)
 
 shinyUI(
   ui = dashboardPage(
@@ -56,8 +58,10 @@ shinyUI(
         tabItem(tabName = "home",
           h2("Home")
         ),
-        source("./apps/leafprofile_ui.R", local=TRUE)$value,
-        source("./apps/phenodynmonitor_ui.R", local=TRUE)$value,
+        lp.tab1,
+        pm.tab1,
+        pm.tab2,
+        pm.tab3,
         tabItem(tabName = "about",
           shinydashboardPlus::userBox(
             title = shinydashboardPlus::userDescription(
