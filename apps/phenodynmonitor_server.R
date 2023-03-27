@@ -1,8 +1,6 @@
 currentMessages <- reactiveValues(mes = list())
-currentText <- reactiveVal()
 
 observeEvent(input$pm.send, {
-  currentText("Hakuna Matata")
   req(input$pm.name, input$pm.message)
   if(input$pm.type == "Info") {
     tmpType <- "received"

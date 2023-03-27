@@ -14,9 +14,6 @@ shinyServer(function(input, output, session) {
   source("./apps/leafprofile_server.R", local=TRUE)
   source("./apps/phenodynmonitor_server.R", local=TRUE)
   
-  vals <- reactiveValues()
-  vals$v1 <- NULL
-  
   get_last_bookmark <- function() {
     list.files(path = 'shiny_bookmarks/') %>%
       map_df(., ~ paste0('shiny_bookmarks/', .x) %>%
