@@ -44,9 +44,9 @@ shinyUI(
       body = dashboardBody(
         tabItems(
           tabItem(tabName = "home",
-            h2("Home"),
-            sliderInput("test","Test", min=0, max=44, value = 0),
-            textInput("testext", "Test text", value = "Florian")
+            shinydashboardPlus::box(width=12,
+              includeMarkdown("home.md")
+            )
           ),
           lp.tab1,
           pm.tab1,
