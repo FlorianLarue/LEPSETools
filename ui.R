@@ -14,7 +14,7 @@ source("./apps/phenodynmonitor_ui.R", local=TRUE)
 
 shinyUI(
   ui = function(request) {
-      dashboardPage(
+    dashboardPage(
       skin="green",
       header = dashboardHeader(
         title = "LEPSEtools"
@@ -27,14 +27,16 @@ shinyUI(
               style="text-align: center;"
           ), br(),
           menuItem("Home", tabName="home", icon=icon("home")),
-          menuItem("Leaf Profile", tabName="leafprofile", icon=icon("seedling")),
+          menuItem("Leaf Profile", tabName="leafprofile", 
+                   icon=icon("seedling")),
           menuItem("Phenodyn Monitor", tabName="dashboard", 
             icon=icon("dashboard"),
             menuSubItem("Import data", tabName="importdata", 
                         icon=icon("file-import")),
             menuSubItem("Export data", tabName="exportdata", 
                         icon=icon("file-export")),
-            menuSubItem("Messages", tabName="messagedata", icon=icon("message"))
+            menuSubItem("Messages", tabName="messagedata", 
+                        icon=icon("message"))
           ),
           menuItem("About", tabName="about", icon=icon("user")),
           bookmarkButton()

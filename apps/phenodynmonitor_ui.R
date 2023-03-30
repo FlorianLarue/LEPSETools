@@ -7,7 +7,7 @@ pm.tab1 <-  tabItem("importdata",
     collapsible = TRUE,
     tabsetPanel(
       tabPanel(
-        title = "Upload",
+        title = "Upload", br(),
         h5("The first step is to upload the Excel file 'name.xlsx' 
             completed with the information of the position of the sensors 
             and the duration of the measurements"), br(),
@@ -15,7 +15,8 @@ pm.tab1 <-  tabItem("importdata",
         actionButton("pm.Submit", "Import data to PhenodynDB")
       ),
       tabPanel(
-        title = "Data table"
+        title = "Data table", br(),
+        DT::DTOutput("pm.df")
       )
     )
   ),
