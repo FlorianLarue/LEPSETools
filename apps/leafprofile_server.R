@@ -65,8 +65,6 @@ observeEvent(input$leafprofiledf,{
   df.input$sel <- 16
   df.input$sel.p <- 16
   df.input$iso <- 1
-  df.lp.init(df.input)
-  df.lp.init.o(df.input)
   
   if(!all(col.names() %in% colnames(df.lp.init()))) {
     shinyalert("Warning", 
@@ -83,7 +81,12 @@ observeEvent(input$leafprofiledf,{
                          choices = unique(df.lp.init.o()$Sowing))
     max.plants(max(df.lp.init.o()$PlantNb, na.rm=T))
     max.leaves(max(df.lp.init.o()$Leafrank, na.rm=T))
+    df.input <- df.input[order(df.input$Variety, df.input$Irrigation, 
+                               df.input$Sowing),]
   }
+  
+  df.lp.init(df.input)
+  df.lp.init.o(df.input)
 })
 
 observeEvent(input$cn.Submit, {
@@ -93,6 +96,7 @@ observeEvent(input$cn.Submit, {
   for(n in col.names()) {
     names(df.tmp)[names(df.tmp) == input[[paste0("cn.", n)]]] <- n
   }
+  df.tmp <- df.tmp[order(df.tmp$Variety, df.tmp$Irrigation, df.tmp$Sowing),]
   df.lp.init(df.tmp)
   df.lp.init.o(df.tmp)
   updateSelectizeInput(session, "leafprofilevar", 
@@ -586,14 +590,14 @@ observeEvent(input$nextS, {
       input$leafprofilesemis) 
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
-  if(input$leafprofilesemis == "S2") { # case 1 : change only sowing
-    updateSelectizeInput(session, "leafprofilesemis", 
-                         choices = unique(df.lp.init.o()$Sowing), 
-                         selected = "S1")
-  } else { # case 2 : change irrig and sowing
+  if(input$leafprofilesemis == "S1") { # case 1 : change only sowing
     updateSelectizeInput(session, "leafprofilesemis", 
                          choices = unique(df.lp.init.o()$Sowing), 
                          selected = "S2")
+  } else { # case 2 : change irrig and sowing
+    updateSelectizeInput(session, "leafprofilesemis", 
+                         choices = unique(df.lp.init.o()$Sowing), 
+                         selected = "S1")
     if(input$leafprofileirrig == "WD") { 
       updateSelectizeInput(session, "leafprofileirrig", 
                            choices = unique(df.lp.init.o()$Irrigation), 
@@ -615,14 +619,14 @@ observeEvent(input$previousS, {
       input$leafprofilesemis)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
-  if(input$leafprofilesemis == "S1") { # case 1 : change only sowing
-    updateSelectizeInput(session, "leafprofilesemis", 
-                         choices = unique(df.lp.init.o()$Sowing), 
-                         selected = "S2")
-  } else { # case 2 : change irrig and sowing
+  if(input$leafprofilesemis == "S2") { # case 1 : change only sowing
     updateSelectizeInput(session, "leafprofilesemis", 
                          choices = unique(df.lp.init.o()$Sowing), 
                          selected = "S1")
+  } else { # case 2 : change irrig and sowing
+    updateSelectizeInput(session, "leafprofilesemis", 
+                         choices = unique(df.lp.init.o()$Sowing), 
+                         selected = "S2")
     if(input$leafprofileirrig == "WW") { 
       updateSelectizeInput(session, "leafprofileirrig", 
                            choices = unique(df.lp.init.o()$Irrigation), 
