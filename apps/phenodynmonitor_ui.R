@@ -1,5 +1,5 @@
 pm.tab1 <-  tabItem("importdata",
-  shinydashboardPlus::box(
+  box(
     title = "Data import",
     icon = icon("file-import"),
     status = "info",
@@ -11,7 +11,7 @@ pm.tab1 <-  tabItem("importdata",
     fileInput("phenodynmonitordf", "Upload Excel file"),
     actionButton("pm.Submit", "Process data")
   ),
-  shinydashboardPlus::box(
+  box(
     title = "Information",
     icon = icon("circle-exclamation"),
     status = "success",
@@ -19,7 +19,7 @@ pm.tab1 <-  tabItem("importdata",
     collapsible = TRUE,
     verbatimTextOutput("pm.Info")
   ),
-  shinydashboardPlus::box(
+  box(
     title = "Data table",
     icon = icon("table"),
     status = "warning",
@@ -30,7 +30,7 @@ pm.tab1 <-  tabItem("importdata",
 )
 
 pm.tab2 <-  tabItem("exportdata",
-  shinydashboardPlus::box(
+  box(
     title = "Data export",
     icon = icon("file-export"),
     status = "info",
@@ -39,6 +39,7 @@ pm.tab2 <-  tabItem("exportdata",
     tabsetPanel(
       tabPanel(
         title = "Download",
+        br(), 
         h5("The first step is to download the data from PhenodynDB and 
            process it using the PhenoDynDataCollector R package"), br(),
         actionButton("pm.DL", "Export data from PhenodynDB")
@@ -48,7 +49,7 @@ pm.tab2 <-  tabItem("exportdata",
       )
     )
   ),
-  shinydashboardPlus::box(
+  box(
     title = "Monitor results",
     icon = icon("chart-line"),
     status = "success",
@@ -59,7 +60,7 @@ pm.tab2 <-  tabItem("exportdata",
 )
   
 pm.tab3 <-  tabItem("messagedata",
-  shinydashboardPlus::box(
+  box(
     title = "Leave messages",
     icon = icon("message"),
     width = 12,
@@ -74,12 +75,12 @@ pm.tab3 <-  tabItem("messagedata",
     textAreaInput("pm.message","Message"),
     actionButton("pm.send", "Send message")
   ),
-  shinydashboardPlus::box(
+  box(
     title = "Message history",
     icon = icon("message"),
     width = 12,
     status = "info",
-    shinydashboardPlus::userMessages(
+    userMessages(
       width = 6,
       status = "danger",
       id = "pmmessages"

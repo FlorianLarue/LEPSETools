@@ -1,7 +1,7 @@
 lp.tab1 <- tabItem(tabName = "leafprofile",
   tabsetPanel(type = "tabs",
     tabPanel("Settings", br(),
-      shinydashboardPlus::box(title="Data import", width=12, status="info",
+      box(title="Data import", width=12, status="info",
         icon = icon("file-import"), collapsible = TRUE,
         fileInput("leafprofiledf","Import data"),
         shinyFiles::shinyDirButton("savePath", 
@@ -9,7 +9,7 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
                                    "Path to directory of tmp file", 
                                    FALSE)
       ),
-      shinydashboardPlus::box(title="Dataframe settings", width=12, 
+      box(title="Dataframe settings", width=12, 
         status="success", icon = icon("table"), collapsible = TRUE,
         splitLayout(
           textInput("cn.Variety", "Variety", value = "Variety"),
@@ -35,7 +35,7 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
       )
     ),
     tabPanel("Analysis", br(),
-      shinydashboardPlus::box(title="Data options", width=12, status="info",
+      box(title="Data options", width=12, status="info",
         icon = icon("gear"), collapsible = TRUE,
         splitLayout(
           tags$head(tags$style(
@@ -61,7 +61,7 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
           actionButton("nextS", "Next")
         )
       ),
-      shinydashboardPlus::box(
+      box(
         title=div("Visualization", downloadBttn("downloadPlots", "")), 
         height="100%", width=12, status = "success", icon = icon("chart-line"), 
         collapsible = TRUE,
@@ -90,7 +90,7 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
           uiOutput("lp.selPlant"),
         )
       ),
-      shinydashboardPlus::box(title="History", height="100%", width=12, 
+      box(title="History", height="100%", width=12, 
         status = "warning", icon = icon("clock-rotate-left"), 
         collapsible = TRUE,
         column(width=6, align="center",

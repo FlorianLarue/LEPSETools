@@ -4,8 +4,7 @@
 
 library(shiny)
 library(shinyalert)
-library(shinydashboard)
-library(shinydashboardPlus)
+library(bs4Dash)
 library(shinyWidgets)
 library(shinyFiles)
 library(shinycssloaders)
@@ -16,6 +15,7 @@ library(data.table)
 library(DT)
 library(ggplot2)
 library(XLConnect)
+library(grid)
 
 enableBookmarking("server")
 
