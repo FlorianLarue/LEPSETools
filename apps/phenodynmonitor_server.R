@@ -35,15 +35,82 @@ observeEvent(input$pm.Submit, {
       XLConnect::readWorksheet(excelFiles$workbook, "DateMesure", 3, 2)
     excelFiles$notationMesure <- 
       XLConnect::readWorksheet(excelFiles$workbook, "NotationMesure")
+    
+    # 1 - rename rdt
+    for(r in 1:nrow(excelFiles$notationMesure)) {
+      if(!is.na(excelFiles$notationMesure[r, "RDT"])) {
+        splt <- strsplit(excelFiles$notationMesure[r,"RDT"], split="")[[1]]
+        newname <- c()
+        firstdigit <- TRUE
+        for(l in 1:length(splt)) {
+          if(is.na(as.numeric(splt[l]))) {
+            newname <- c(newname, tolower(splt[l]))
+          } else {
+            if(firstdigit && l == length(splt)) {
+              newname <- c(newname, paste0("0",splt[l]))
+            } else {
+              newname <- c(newname, splt[l])
+              firstdigit <- FALSE
+            }
+          }
+        }
+        excelFiles$notationMesure[r,"RDT"] <- paste(newname, collapse = "")
+      }
+    }
+    
+    errors <- list()
 
-    output$pm.df <- DT::renderDT(
-      excelFiles$notationMesure,
-      options = list(scrollX=TRUE)
-    )
+    if(length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"]))]) > 0) {
+      tmp <- c()
+      for(s in 1:length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"]))])) {
+        errors[["Rdt"]] <- c(errors[["Rdt"]], unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"]))][s])
+      }
+    }
+    
+    if(length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"]))]) > 0) {
+      tmp <- c()
+      for(s in 1:length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"]))])) {
+        errors[["Tc"]] <- c(errors[["Tc"]], unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"]))][s])
+      }
+    }
+    
+    if(length(errors) == 0) {
+      output$pm.Info <- renderText({
+        paste("No errors in file")
+      })
       
+      output$pm.df <- DT::renderDT(
+        excelFiles$notationMesure,
+        options = list(scrollX=TRUE),
+        editable = TRUE
+      )
       
-    shinyalert("Excel file loaded", "Succesfully loaded the Excel file",
-               type="success")
+      shinyalert("Excel file loaded", "Succesfully loaded the Excel file without errors",
+                 type="success")
+    } else {
+      output$pm.Info <- renderText({
+        paste("Duplicate RDT detected:", paste0(errors[["Rdt"]], collapse=", "), "",
+              "Duplicate TC detected:", paste0(errors[["Tc"]], collapse=", "),
+               sep="\n")
+      })
+      
+      RDTrows <- subset(subset(excelFiles$notationMesure, duplicated(excelFiles$notationMesure$RDT) | 
+                     duplicated(excelFiles$notationMesure$RDT, fromLast = TRUE)), !is.na(RDT))
+      TCrows <- subset(subset(excelFiles$notationMesure, duplicated(excelFiles$notationMesure$TC) | 
+                      duplicated(excelFiles$notationMesure$TC, fromLast = TRUE)), !is.na(TC))
+      errorRows <- rbind(RDTrows, TCrows)
+      errorRows <- errorRows[!duplicated(errorRows),]
+      
+      output$pm.df <- DT::renderDT(
+        errorRows,
+        options = list(scrollX=TRUE),
+        editable = TRUE
+      )
+      
+      shinyalert("Excel file loaded", "Succesfully loaded the Excel file but with errors",
+                 type="warning")
+    }
+    
   } else {
     shinyalert("Incompatible file", "Please provide a .xls or .xlsx file",
                type="error")

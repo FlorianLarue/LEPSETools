@@ -5,29 +5,27 @@ pm.tab1 <-  tabItem("importdata",
     status = "info",
     width = 12,
     collapsible = TRUE,
-    tabsetPanel(
-      tabPanel(
-        title = "Upload", br(),
-        h5("The first step is to upload the Excel file 'name.xlsx' 
-            completed with the information of the position of the sensors 
-            and the duration of the measurements"), br(),
-        fileInput("phenodynmonitordf", "Upload Excel file"),
-        actionButton("pm.Submit", "Import data to PhenodynDB")
-      ),
-      tabPanel(
-        title = "Data table", br(),
-        DT::DTOutput("pm.df")
-      )
-    )
+    br(), h5("The first step is to upload the Excel file 'name.xlsx' 
+             completed with the information of the position of the sensors
+             and the duration of the measurements"), br(),
+    fileInput("phenodynmonitordf", "Upload Excel file"),
+    actionButton("pm.Submit", "Process data")
   ),
   shinydashboardPlus::box(
-    title = "Monitor sensors",
-    icon = icon("chart-line"),
+    title = "Information",
+    icon = icon("circle-exclamation"),
     status = "success",
     width = 12,
     collapsible = TRUE,
-    h5("Here you can monitor sensor data based on the information provided
-        above and fix potential errors")
+    verbatimTextOutput("pm.Info")
+  ),
+  shinydashboardPlus::box(
+    title = "Data table",
+    icon = icon("table"),
+    status = "warning",
+    width = 12,
+    collapsible = TRUE,
+    DT::DTOutput("pm.df")
   )
 )
 
