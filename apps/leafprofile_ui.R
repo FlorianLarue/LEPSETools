@@ -62,47 +62,51 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
         )
       ),
       box(
-        title=div("Visualization", downloadBttn("downloadPlots", "")), 
+        title=downloadBttn("downloadPlots", "Visualization", size = "sm"), 
         height="100%", width=12, status = "success", icon = icon("chart-line"), 
         collapsible = TRUE,
-        column(width=6, align="center",
-          actionButton("leftshift", label= div(icon("arrow-left"), 
-                                               "Shift left")),
-          actionButton("rightshift", label=div("Shift right", 
-                                               icon("arrow-right"))),
-          actionButton("inverse", label="Inverse"),
-          actionButton("reset", label="Reset"),
-          plotOutput("lp.plot", height="100%", click="plot_click")
-        ),
-        column(width=6, align="center",
-          actionButton("pp.leftshift", label= div(icon("arrow-left"), 
-                                                  "Shift left")),
-          actionButton("pp.rightshift", label=div("Shift right", 
-                                                  icon("arrow-right"))),
-          actionButton("pp.inverse", label="Inverse"),
-          actionButton("pp.isolate", label="Isolate"),
-          plotOutput("pp.plot", height="100%", click="plot_click2")
-        ),
-        column(width=6, align="center",
-          uiOutput("lp.selRank"),
-        ),
-        column(width=6, align="center",
-          uiOutput("lp.selPlant"),
+        fluidRow(
+          column(width=6, align="center",
+                 actionButton("leftshift", label= div(icon("arrow-left"), 
+                                                      "Shift left")),
+                 actionButton("rightshift", label=div("Shift right", 
+                                                      icon("arrow-right"))),
+                 actionButton("inverse", label="Inverse"),
+                 actionButton("reset", label="Reset"),
+                 plotOutput("lp.plot", height="100%", click="plot_click")
+          ),
+          column(width=6, align="center",
+                 actionButton("pp.leftshift", label= div(icon("arrow-left"), 
+                                                         "Shift left")),
+                 actionButton("pp.rightshift", label=div("Shift right", 
+                                                         icon("arrow-right"))),
+                 actionButton("pp.inverse", label="Inverse"),
+                 actionButton("pp.isolate", label="Isolate"),
+                 plotOutput("pp.plot", height="100%", click="plot_click2")
+          ),
+          column(width=6, align="center",
+                 uiOutput("lp.selRank"),
+          ),
+          column(width=6, align="center",
+                 uiOutput("lp.selPlant"),
+          )
         )
       ),
       box(title="History", height="100%", width=12, 
         status = "warning", icon = icon("clock-rotate-left"), 
         collapsible = TRUE,
-        column(width=6, align="center",
-          actionButton("saveChanges", "Save changes"),
-          downloadButton("downloadData", "Download dataframe"),
-          actionButton("resetall", "Reset all"),
-          DT::dataTableOutput("lp.df")
-        ),
-        column(width=6, align="center",
-          actionButton("revert", label="Revert selected changes"),
-          downloadButton("downloadHistory", "Download history"),
-          DT::dataTableOutput("changes.df")
+        fluidRow(
+          column(width=6, align="center",
+                 actionButton("saveChanges", "Save changes"),
+                 downloadButton("downloadData", "Download dataframe"),
+                 actionButton("resetall", "Reset all"),
+                 DT::dataTableOutput("lp.df")
+          ),
+          column(width=6, align="center",
+                 actionButton("revert", label="Revert selected changes"),
+                 downloadButton("downloadHistory", "Download history"),
+                 DT::dataTableOutput("changes.df")
+          )
         )
       )
     )
