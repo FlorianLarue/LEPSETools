@@ -1,6 +1,11 @@
 # variables
-tillerString <- reactiveVal()
-df.til <- reactiveVal()
+tillerString <- reactiveVal(c(""))
+df.til.sens <- reactiveVal()
+df.til.till <- reactiveVal()
+totalTil <- c("1-0","2-0","1-1;3-0","1-2;2-1;4-0", 
+              "1-3;1-1-1;2-2;3-1;5-0", 
+              "1-4;1-1-2;1-2-1;2-3;2-1-1;3-2;4-1;6-0")
+tmptil <- reactiveVal(1)
 
 # functions
 drawTiller <- function(tillerString, stepSize = 10) {
@@ -78,7 +83,13 @@ drawTiller <- function(tillerString, stepSize = 10) {
   }
 }
 sensiEquation <- function(SDi, USD, LSD) {
-  return((SDi - LSD)/(USD - LSD))
+  return(max(c(0, min(c(1, (SDi - LSD)/(USD - LSD))))))
+}
+fiboTiller <- function(i) {
+  return((((1+sqrt(5))/2)^i - ((1-sqrt(5))/2)^i)/sqrt(5))
+}
+newTiller <- function(i, SDi, USD, LSD) {
+  return(round(fiboTiller(i-2) * sensiEquation(SDi, USD, LSD)))
 }
 
 # Listeners
@@ -88,31 +99,76 @@ listen.til.param <- reactive({
 
 # Observers
 observeEvent(listen.til.param(), {
-  df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.2), 
-                       Sensitivity = sensiEquation(seq(from=0.2, to = 2, by = 0.2), 
-                                                   input$tilleringUSD, input$tilleringLSD))
-  df.tmp[df.tmp$Sensitivity < 0, "Sensitivity"] <- 0
-  df.tmp[df.tmp$Sensitivity > 1, "Sensitivity"] <- 1
-  df.til(df.tmp)
+  df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.2))
+  for(m in 1:nrow(df.tmp)) {
+    df.tmp[m, "Sensitivity"] <- sensiEquation(df.tmp[m, "SDi"], 
+                                              input$tilleringUSD, 
+                                              input$tilleringLSD)
+  }
+  df.til.sens(df.tmp)
+  
+  df.tmp <- data.frame(Phyllochron = 1:8, PNT = c(0, 0, fiboTiller(1:6)), 
+                       PTT = fiboTiller(1:8), 
+                       SDi = c(1.8, 1.8, seq(1.8, 0.8, -0.2)))
+  df.tmp$NT <- 0
+  df.tmp$TT <- 1
+  for(n in 2:nrow(df.tmp)) {
+    df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
+                                 input$tilleringUSD, input$tilleringLSD)
+    df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
+  }
+  
+  df.til.till(df.tmp)
+})
+
+observeEvent(input$tilleringphyllo, {
+  if(input$tilleringphyllo > 2) {
+    tillerString(totalTil[1:((input$tilleringphyllo)-2)])
+    output$tilgrid <- renderPlot({
+      drawTiller(tillerString())
+    })
+  } else {
+    tillerString("")
+  }
 })
 
 # Outputs
 output$tilgrid <- renderPlot({
-  tillerString(c("1-0","2-0","1-1;3-0","1-2;2-1;4-0", "1-3;1-1-1;2-2;3-1;5-0", 
-                  "1-4;1-1-2;1-2-1;2-3;2-1-1;3-2;4-1;6-0"))
   drawTiller(tillerString())
 })
 
-output$til.df <- DT::renderDataTable({
+output$til.df.sens <- DT::renderDataTable({
   DT::datatable(
-    df.til(), 
+    df.til.sens(),
     options=list(dom="t", pageLength=-1,
-                 columnDefs = list(list(className = 'dt-center', targets = 0:1))),
+                 columnDefs = list(list(className = 'dt-center',
+                                        targets = 0:1))),
     fillContainer = T,
     rownames = FALSE
   ) %>% formatRound(c(1:2), 2)
 })
 
-output$sensplot <- renderPlot({
-  plot(df.til()$SDi, df.til()$Sensitivity, type="b", xlab="SDi", ylab="Sensitivity")
+output$til.plot.sens <- renderPlot({
+  plot(df.til.sens()$SDi, df.til.sens()$Sensitivity, type="b", xlab="SDi", 
+       ylab="Sensitivity")
 })
+
+output$til.df.till <- DT::renderDataTable({
+  DT::datatable(
+    df.til.till(),
+    options=list(dom="t", pageLength=-1,
+                 columnDefs = list(list(className = 'dt-center',
+                                        targets = 0:5))),
+    fillContainer = T,
+    rownames = FALSE
+  ) %>% formatRound(c(1:3), 0) %>% 
+    formatRound(c(4), 2) %>% 
+    formatRound(c(5:6), 0)
+})
+
+output$til.plot.till <- renderPlot({
+  plot(df.til.till()$Phyllochron, df.til.till()$PTT, type="b", col="red",
+       xlab = "Phyllochron", ylab = "Total Tiller Number")
+  lines(df.til.till()$Phyllochron, df.til.till()$TT, type="b")
+})
+

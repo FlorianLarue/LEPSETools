@@ -1,0 +1,77 @@
+Variety,Sowing,Irrigation,Date,Plantnumber,Leafrank,Action
+Renan,S2,WW,10/03/2021,all,all,Inverse
+Renan,S2,WW,10/03/2021,8,all,Left shift
+Renan,S2,WW,10/03/2021,3,all,Left shift
+Renan,S2,WW,10/03/2021,7,all,Right shift
+Renan,S2,WW,10/03/2021,2,all,Right shift
+Renan,S2,WW,10/03/2021,2,4,Delete
+Renan,S2,WW,10/03/2021,2,5,Delete
+Renan,S2,WW,10/03/2021,7,5,Delete
+Renan,S2,WW,10/03/2021,2,5,Delete
+Renan,S2,WW,10/03/2021,5,all,Delete
+Renan,S2,WW,10/03/2021,8,all,Delete
+Renan,S2,WW,10/03/2021,4,all,Left shift
+Renan,S2,WW,10/03/2021,4,all,Delete
+Renan,S2,WW,10/03/2021,6,4,Delete
+Renan,S2,WW,10/03/2021,all,0,Delete
+Renan,S2,WW,13/04/2021,all,all,Inverse
+Renan,S2,WW,13/04/2021,5,all,Delete
+Renan,S2,WW,13/04/2021,4,all,Delete
+Renan,S2,WW,13/04/2021,3,all,Left shift
+Renan,S2,WW,13/04/2021,1,all,Left shift
+Renan,S2,WW,13/04/2021,1,all,Delete
+Renan,S2,WW,13/04/2021,3,all,Delete
+Renan,S2,WW,13/04/2021,8,all,Delete
+Renan,S2,WW,13/04/2021,6,all,Inverse
+Renan,S2,WW,13/04/2021,8,all,Inverse
+Renan,S2,WW,03/05/2021,all,all,Inverse
+Renan,S2,WW,03/05/2021,5,all,Delete
+Renan,S2,WW,03/05/2021,6,all,Right shift
+Renan,S2,WW,03/05/2021,7,all,Right shift
+Renan,S2,WW,03/05/2021,2,7,Delete
+Renan,S2,WW,03/05/2021,6,11,Delete
+Renan,S2,WW,03/05/2021,7,11,Delete
+Renan,S2,WW,08/06/2021,all,all,Inverse
+Renan,S2,WW,08/06/2021,4,all,Delete
+Renan,S2,WW,08/06/2021,1,all,Delete
+Renan,S2,WW,08/06/2021,10,all,Delete
+Renan,S2,WW,08/06/2021,2,all,Delete
+Renan,S2,WW,08/06/2021,5,all,Delete
+Renan,S2,WW,08/06/2021,3,all,Delete
+Renan,S2,WW,08/06/2021,7,all,Delete
+Renan,S2,WW,08/06/2021,all,all,Left shift
+Renan,S2,WW,13/04/2021,all,all,Left shift
+Renan,S1,WW,10/03/2021,all,all,Inverse
+Renan,S1,WW,10/03/2021,7,all,Delete
+Renan,S1,WW,10/03/2021,1,all,Delete
+Renan,S1,WW,10/03/2021,3,9,Delete
+Renan,S1,WW,10/03/2021,8,all,Delete
+Renan,S1,WW,10/03/2021,3,9,Delete
+Renan,S1,WW,10/03/2021,9,9,Delete
+Renan,S1,WW,13/04/2021,all,all,Inverse
+Renan,S1,WW,13/04/2021,4,all,Delete
+Renan,S1,WW,13/04/2021,3,all,Delete
+Renan,S1,WW,13/04/2021,8,all,Delete
+Renan,S1,WW,13/04/2021,5,all,Delete
+Renan,S1,WW,13/04/2021,7,all,Delete
+Renan,S1,WW,13/04/2021,all,all,Left shift
+Renan,S1,WW,13/04/2021,all,all,Right shift
+Renan,S1,WW,13/04/2021,all,11,Delete
+Renan,S1,WW,13/04/2021,all,10,Delete
+Renan,S1,WW,13/04/2021,all,12,Delete
+Renan,S1,WW,11/05/2021,all,all,Inverse
+Renan,S1,WW,11/05/2021,2,all,Delete
+Renan,S1,WW,11/05/2021,8,all,Delete
+Renan,S1,WW,11/05/2021,10,all,Delete
+Renan,S1,WW,11/05/2021,7,all,Delete
+Renan,S1,WW,11/05/2021,4,all,Left shift
+Oregrain,S2,WD,10/03/2021,all,all,Inverse
+Oregrain,S2,WD,10/03/2021,2,all,Delete
+Oregrain,S2,WD,10/03/2021,all,all,Right shift
+Oregrain,S2,WD,10/03/2021,5,all,Delete
+Oregrain,S2,WD,10/03/2021,8,all,Right shift
+Oregrain,S2,WD,10/03/2021,all,1,Delete
+Oregrain,S2,WD,10/03/2021,8,all,Delete
+Oregrain,S2,WD,10/03/2021,9,all,Delete
+Oregrain,S2,WD,10/03/2021,9,5,Delete
+Oregrain,S2,WD,10/03/2021,7,5,Delete
