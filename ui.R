@@ -17,15 +17,17 @@ shinyUI(
   ui = function(request) {
     bs4DashPage(
       header = dashboardHeader(
-        title = "LEPSEtools"
+        bookmarkButton(),
+        title = "LEPSE Tools",
+        skin = "dark"
       ),
       
       sidebar = dashboardSidebar(
         sidebarMenu(
           br(),
-          div(img(src="logo.png", height=105, width=123), 
+          div(img(src="logo.png", height=65.5, width=138), 
               style="text-align: center;"
-          ), br(),
+          ), br(), br(),
           menuItem("Home", tabName="home", icon=icon("home")),
           menuItem("Leaf Profile", tabName="leafprofile", 
                    icon=icon("seedling")),
@@ -40,8 +42,7 @@ shinyUI(
           ),
           menuItem("Tillering", tabName="tillering", 
                    icon=icon("plant-wilt")),
-          menuItem("About", tabName="about", icon=icon("user")),
-          bookmarkButton()
+          menuItem("About", tabName="about", icon=icon("user"))
         )
       ),
       

@@ -1,4 +1,6 @@
 # variables
+tillerString <- reactiveVal()
+df.til <- reactiveVal()
 
 # functions
 drawTiller <- function(tillerString, stepSize = 10) {
@@ -75,9 +77,42 @@ drawTiller <- function(tillerString, stepSize = 10) {
     }
   }
 }
+sensiEquation <- function(SDi, USD, LSD) {
+  return((SDi - LSD)/(USD - LSD))
+}
 
+# Listeners
+listen.til.param <- reactive({
+  list(input$tilleringLSD, input$tilleringUSD)
+})
+
+# Observers
+observeEvent(listen.til.param(), {
+  df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.2), 
+                       Sensitivity = sensiEquation(seq(from=0.2, to = 2, by = 0.2), 
+                                                   input$tilleringUSD, input$tilleringLSD))
+  df.tmp[df.tmp$Sensitivity < 0, "Sensitivity"] <- 0
+  df.tmp[df.tmp$Sensitivity > 1, "Sensitivity"] <- 1
+  df.til(df.tmp)
+})
+
+# Outputs
 output$tilgrid <- renderPlot({
-  testString <- c("1-0","2-0","1-1;3-0","1-2;2-1;4-0", "1-3;1-1-1;2-2;3-1;5-0", 
-                  "1-4;1-1-2;1-2-1;2-3;2-1-1;3-2;4-1;6-0")
-  drawTiller(testString)
+  tillerString(c("1-0","2-0","1-1;3-0","1-2;2-1;4-0", "1-3;1-1-1;2-2;3-1;5-0", 
+                  "1-4;1-1-2;1-2-1;2-3;2-1-1;3-2;4-1;6-0"))
+  drawTiller(tillerString())
+})
+
+output$til.df <- DT::renderDataTable({
+  DT::datatable(
+    df.til(), 
+    options=list(dom="t", pageLength=-1,
+                 columnDefs = list(list(className = 'dt-center', targets = 0:1))),
+    fillContainer = T,
+    rownames = FALSE
+  ) %>% formatRound(c(1:2), 2)
+})
+
+output$sensplot <- renderPlot({
+  plot(df.til()$SDi, df.til()$Sensitivity, type="b", xlab="SDi", ylab="Sensitivity")
 })
