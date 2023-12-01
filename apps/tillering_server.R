@@ -1,16 +1,31 @@
-# variables
-tillerString <- reactiveVal(NULL)
-df.til.sens <- reactiveVal()
-df.til.till <- reactiveVal()
-
-totalTil <- c("0",
-              "1",
-              "0-0;2",
-              "1-0;0-1;3", 
-              "1-1;0-2;4;0-0-0;2-0", 
-              "1-2;0-3;5;0-0-1;2-1;1-0-0;0-1-0;3-0")
-
 # functions
+getTillers <- function(n1, n2) {
+  if(is.null(n2) && is.null(n1)) {
+    return("1")
+  } else if(is.null(n2) && !is.null(n1)) {
+    return(as.character(as.numeric(n1)+1))
+  } else {
+    solString <- NULL
+    # Add to n-1
+    n1Split <- unlist(strsplit(n1, ";"))
+    for(n1s in n1Split) {
+      n1sSplit <- unlist(strsplit(n1s, "-"))
+      n1sSplit[length(n1sSplit)] <- as.character(as.numeric(n1sSplit[length(n1sSplit)]) + 1)
+      if(is.null(solString)) {
+        solString <- paste(n1sSplit, collapse="-")
+      } else {
+        solString <- paste(solString, paste(n1sSplit, collapse="-"), sep=";")
+      }
+    }
+    
+    # Increment to n-2
+    n2Split <- unlist(strsplit(n2, ";"))
+    for(n2s in n2Split) {
+      solString <- paste(solString, paste(n2s, "-0", sep=""), sep=";")
+    }
+    return(solString)
+  }
+}
 drawTiller <- function(tillerString, stepSize = 15) {
   colorList <- c("black","red","green","blue","orange","purple",
                  "yellow","lightblue")
@@ -105,6 +120,19 @@ newTiller <- function(i, SDi, USD, LSD) {
   return(round(fiboTiller(i-2) * sensiEquation(SDi, USD, LSD)))
 }
 
+# variables
+tillerString <- reactiveVal(NULL)
+df.til.sens <- reactiveVal()
+df.til.till <- reactiveVal({
+  df.tmp <- data.frame(Phyllochron = 1:8, PNT = c(0, 0, fiboTiller(1:6)), 
+                       PTT = fiboTiller(1:8), 
+                       SDi = c(1.8, 1.8, seq(1.8, 0.8, -0.2)), 
+                       NT = rep(0, 8), TT = rep(1, 8))
+  df.tmp
+})
+
+totalTil <- c("0","1","0-0;2","1-0;0-1;3", "1-1;0-2;4;0-0-0;2-0", "1-2;0-3;5;0-0-1;2-1;1-0-0;0-1-0;3-0")
+
 # Listeners
 listen.til.param <- reactive({
   list(input$tilleringLSD, input$tilleringUSD)
@@ -112,7 +140,7 @@ listen.til.param <- reactive({
 
 # Observers
 observeEvent(listen.til.param(), {
-  df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.2))
+  df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.1))
   for(m in 1:nrow(df.tmp)) {
     df.tmp[m, "Sensitivity"] <- sensiEquation(df.tmp[m, "SDi"], 
                                               input$tilleringUSD, 
@@ -120,17 +148,13 @@ observeEvent(listen.til.param(), {
   }
   df.til.sens(df.tmp)
   
-  df.tmp <- data.frame(Phyllochron = 1:8, PNT = c(0, 0, fiboTiller(1:6)), 
-                       PTT = fiboTiller(1:8), 
-                       SDi = c(1.8, 1.8, seq(1.8, 0.8, -0.2)))
-  df.tmp$NT <- 0
-  df.tmp$TT <- 1
+  df.tmp <- df.til.till()
   for(n in 2:nrow(df.tmp)) {
     df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
                                  input$tilleringUSD, input$tilleringLSD)
     df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
   }
-  
+
   df.til.till(df.tmp)
 })
 
@@ -143,6 +167,17 @@ observeEvent(input$tilleringphyllo, {
   } else {
     tillerString(NULL)
   }
+})
+
+observeEvent(input$til.df.till_cell_edit, {
+  df.tmp <- df.til.till()
+  df.tmp$SDi <- input$til.df.till_cell_edit$value
+  for(n in 2:nrow(df.tmp)) {
+    df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
+                                 input$tilleringUSD, input$tilleringLSD)
+    df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
+  }
+  df.til.till(df.tmp)
 })
 
 # Outputs
@@ -172,6 +207,8 @@ output$til.df.till <- DT::renderDataTable({
     options=list(dom="t", pageLength=-1,
                  columnDefs = list(list(className = 'dt-center',
                                         targets = 0:5))),
+    editable = list(target = "column", disable = list(columns = c(0:2, 4:5))),
+    selection = "none",
     fillContainer = T,
     rownames = FALSE
   ) %>% formatRound(c(1:3), 0) %>% 
