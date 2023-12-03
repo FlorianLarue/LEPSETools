@@ -130,8 +130,7 @@ df.til.till <- reactiveVal({
                        NT = rep(0, 8), TT = rep(1, 8))
   df.tmp
 })
-
-totalTil <- c("0","1","0-0;2","1-0;0-1;3", "1-1;0-2;4;0-0-0;2-0", "1-2;0-3;5;0-0-1;2-1;1-0-0;0-1-0;3-0")
+ls.til.grid <- reactiveVal()
 
 # Listeners
 listen.til.param <- reactive({
@@ -140,6 +139,7 @@ listen.til.param <- reactive({
 
 # Observers
 observeEvent(listen.til.param(), {
+  # sensitivity df
   df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.1))
   for(m in 1:nrow(df.tmp)) {
     df.tmp[m, "Sensitivity"] <- sensiEquation(df.tmp[m, "SDi"], 
@@ -148,6 +148,7 @@ observeEvent(listen.til.param(), {
   }
   df.til.sens(df.tmp)
   
+  # potential and real tiller number
   df.tmp <- df.til.till()
   for(n in 2:nrow(df.tmp)) {
     df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
@@ -156,14 +157,24 @@ observeEvent(listen.til.param(), {
   }
 
   df.til.till(df.tmp)
+  
+  # tiller diagram list
+  list.tmp <- c("0","1")
+  for(i in 3:6) {
+    nt <- df.til.till()[i+2, "NT"]
+    pt <- getTillers(list.tmp[i-1], list.tmp[i-2])
+    pt.tmp <- unlist(strsplit(pt, ";"))
+    pt.tmp <- pt.tmp[order(pt.tmp)]
+    pt.tmp <- tail(pt.tmp, nt)
+    pt.tmp <- paste(pt.tmp, collapse=";")
+    list.tmp <- c(list.tmp, pt.tmp)
+  }
+  ls.til.grid(list.tmp)
 })
 
 observeEvent(input$tilleringphyllo, {
   if(input$tilleringphyllo > 2) {
-    tillerString(totalTil[1:((input$tilleringphyllo)-2)])
-    output$tilgrid <- renderPlot({
-      drawTiller(tillerString())
-    })
+    tillerString(ls.til.grid()[1:((input$tilleringphyllo)-2)])
   } else {
     tillerString(NULL)
   }
@@ -178,6 +189,18 @@ observeEvent(input$til.df.till_cell_edit, {
     df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
   }
   df.til.till(df.tmp)
+  
+  list.tmp <- c("0","1")
+  for(i in 3:6) {
+    nt <- df.til.till()[i+2, "NT"]
+    pt <- getTillers(list.tmp[i-1], list.tmp[i-2])
+    pt.tmp <- unlist(strsplit(pt, ";"))
+    pt.tmp <- pt.tmp[order(pt.tmp)]
+    pt.tmp <- tail(pt.tmp, nt)
+    pt.tmp <- paste(pt.tmp, collapse=";")
+    list.tmp <- c(list.tmp, pt.tmp)
+  }
+  ls.til.grid(list.tmp)
 })
 
 # Outputs
