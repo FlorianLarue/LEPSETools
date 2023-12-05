@@ -1,27 +1,40 @@
 # functions
 getTillers <- function(n1, n2) {
-  if(is.null(n2) && is.null(n1)) {
-    return("1")
-  } else if(is.null(n2) && !is.null(n1)) {
-    return(as.character(as.numeric(n1)+1))
+  if(is.na(n2) && is.na(n1)) {
+    return("0")
+  } else if(is.na(n2) && !is.na(n1)) {
+    return(as.character("1"))
   } else {
     solString <- NULL
+    
     # Add to n-1
-    n1Split <- unlist(strsplit(n1, ";"))
-    for(n1s in n1Split) {
-      n1sSplit <- unlist(strsplit(n1s, "-"))
-      n1sSplit[length(n1sSplit)] <- as.character(as.numeric(n1sSplit[length(n1sSplit)]) + 1)
-      if(is.null(solString)) {
-        solString <- paste(n1sSplit, collapse="-")
-      } else {
-        solString <- paste(solString, paste(n1sSplit, collapse="-"), sep=";")
+    if(n1 != "") {
+      n1Split <- unlist(strsplit(n1, ";"))
+      for(n1s in n1Split) {
+        n1sSplit <- unlist(strsplit(n1s, "-"))
+        n1sSplit[length(n1sSplit)] <- as.character(as.numeric(n1sSplit[length(n1sSplit)]) + 1)
+        if(is.null(solString)) {
+          solString <- paste(n1sSplit, collapse="-")
+        } else {
+          solString <- paste(solString, paste(n1sSplit, collapse="-"), sep=";")
+        }
       }
     }
     
     # Increment to n-2
-    n2Split <- unlist(strsplit(n2, ";"))
-    for(n2s in n2Split) {
-      solString <- paste(solString, paste(n2s, "-0", sep=""), sep=";")
+    if(n2 != "") {
+      n2Split <- unlist(strsplit(n2, ";"))
+      for(n2s in n2Split) {
+        if(is.null(solString)) {
+          solString <- paste(n2s, "-0", sep="")
+        } else {
+          solString <- paste(solString, paste(n2s, "-0", sep=""), sep=";")
+        }
+      }
+    }
+    
+    if(is.null(solString)) {
+      solString <- ""
     }
     return(solString)
   }
@@ -52,7 +65,7 @@ drawTiller <- function(tillerString, stepSize = 15) {
   grid.line.to(x, y, default.units = "native")
   grid.line.to(x+0.5, y, default.units = "native")
   top[[1]] <- c(x, y, 0, 1)
-  
+
   if(length(tillerString) > 0) {
     for(n in 1:length(tillerString)) {
       # Create new phytomer at top of each tiller
@@ -263,12 +276,12 @@ observeEvent(listen.til.param(), {
   }
   
   # tiller diagram list
-  list.tmp <- c("0","1")
-  real.tmp <- c("0","1")
-  for(i in 3:6) {
-    nt <- df.til.till()[i+2, "NT"]
+  list.tmp <- c(NA, NA)
+  real.tmp <- c(NA, NA)
+  for(i in 3:8) {
+    nt <- df.til.till()[i, "NT"]
     rl <- getTillers(real.tmp[i-1], real.tmp[i-2])
-    pt <- getTillers(list.tmp[i-1], list.tmp[i-2])
+    pt <- getTillers(real.tmp[i-1], list.tmp[i-2])
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
     pt.tmp <- tail(pt.tmp, nt)
@@ -276,8 +289,8 @@ observeEvent(listen.til.param(), {
     list.tmp <- c(list.tmp, pt.tmp)
     real.tmp <- c(real.tmp, rl)
   }
-  ls.til.grid(list.tmp)
-  ls.real.grid(real.tmp)
+  ls.til.grid(list.tmp[3:8])
+  ls.real.grid(real.tmp[3:8])
 })
 observeEvent(input$tilleringphyllo, {
   if(input$tilleringphyllo > 2) {
@@ -303,7 +316,7 @@ observeEvent(input$til.df.till_cell_edit, {
   for(i in 3:6) {
     nt <- df.til.till()[i+2, "NT"]
     rl <- getTillers(real.tmp[i-1], real.tmp[i-2])
-    pt <- getTillers(list.tmp[i-1], list.tmp[i-2])
+    pt <- getTillers(real.tmp[i-1], list.tmp[i-2])
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
     pt.tmp <- tail(pt.tmp, nt)
