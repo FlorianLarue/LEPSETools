@@ -27,7 +27,8 @@ til.tab1 <- tabItem(tabName = "tillering",
       width = 6, height = "750px", br(),
       plotOutput("tilgrid", width="100%"), br(), br(),
       sliderInput("tilleringphyllo", "Phyllochron", min = 2, max = 8,
-                  value = 2, step = 1, animate = animationOptions(loop = TRUE))
+                  value = 2, step = 1, animate = animationOptions(loop = TRUE)),
+      checkboxInput("til.showall", "Show non emerged tillers", value = FALSE)
     )
   ),
   box(
