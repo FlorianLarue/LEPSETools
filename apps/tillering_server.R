@@ -1,22 +1,25 @@
 # functions
-getTillers <- function(n1, n2) {
+getTillers <- function(n1, n2, n) {
   if(is.na(n2) && is.na(n1)) {
     return("0")
   } else if(is.na(n2) && !is.na(n1)) {
     return(as.character("1"))
   } else {
     solString <- NULL
-    
+    nSplit <- unlist(strsplit(n, ";"))
     # Add to n-1
     if(n1 != "") {
       n1Split <- unlist(strsplit(n1, ";"))
       for(n1s in n1Split) {
         n1sSplit <- unlist(strsplit(n1s, "-"))
-        n1sSplit[length(n1sSplit)] <- as.character(as.numeric(n1sSplit[length(n1sSplit)]) + 1)
-        if(is.null(solString)) {
-          solString <- paste(n1sSplit, collapse="-")
-        } else {
-          solString <- paste(solString, paste(n1sSplit, collapse="-"), sep=";")
+        n1sParent <- paste(n1sSplit[1:(length(n1sSplit)-1)], collapse="-")
+        if(n1sParent %in% nSplit || length(n1sSplit) == 1) {
+          n1sSplit[length(n1sSplit)] <- as.character(as.numeric(n1sSplit[length(n1sSplit)]) + 1)
+          if(is.null(solString)) {
+            solString <- paste(n1sSplit, collapse="-")
+          } else {
+            solString <- paste(solString, paste(n1sSplit, collapse="-"), sep=";")
+          }
         }
       }
     }
@@ -279,11 +282,12 @@ observeEvent(listen.til.param(), {
   list.tmp <- c(NA, NA)
   real.tmp <- c(NA, NA)
   for(i in 3:8) {
-    nt <- df.til.till()[i, "NT"]
-    rl <- getTillers(real.tmp[i-1], real.tmp[i-2])
-    pt <- getTillers(real.tmp[i-1], list.tmp[i-2])
+    rl <- getTillers(real.tmp[i-1], real.tmp[i-2], real.tmp)
+    pt <- getTillers(real.tmp[i-1], list.tmp[i-2], list.tmp)
+    sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
+    nt <- round(length(pt.tmp) * sens)
     pt.tmp <- tail(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
     list.tmp <- c(list.tmp, pt.tmp)
@@ -311,21 +315,22 @@ observeEvent(input$til.df.till_cell_edit, {
   }
   df.til.till(df.tmp)
   
-  list.tmp <- c("0","1")
-  real.tmp <- c("0","1")
-  for(i in 3:6) {
-    nt <- df.til.till()[i+2, "NT"]
-    rl <- getTillers(real.tmp[i-1], real.tmp[i-2])
-    pt <- getTillers(real.tmp[i-1], list.tmp[i-2])
+  list.tmp <- c(NA, NA)
+  real.tmp <- c(NA, NA)
+  for(i in 3:8) {
+    rl <- getTillers(real.tmp[i-1], real.tmp[i-2], real.tmp)
+    pt <- getTillers(real.tmp[i-1], list.tmp[i-2], list.tmp)
+    sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
+    nt <- round(length(pt.tmp) * sens)
     pt.tmp <- tail(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
     list.tmp <- c(list.tmp, pt.tmp)
     real.tmp <- c(real.tmp, rl)
   }
-  ls.til.grid(list.tmp)
-  ls.real.grid(real.tmp)
+  ls.til.grid(list.tmp[3:8])
+  ls.real.grid(real.tmp[3:8])
 })
 
 # Outputs
