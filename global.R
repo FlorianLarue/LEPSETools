@@ -16,6 +16,7 @@ library(DT)
 library(ggplot2)
 library(XLConnect)
 library(grid)
+library(RColorBrewer)
 
 enableBookmarking("server")
 

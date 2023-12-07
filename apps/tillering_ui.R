@@ -28,7 +28,10 @@ til.tab1 <- tabItem(tabName = "tillering",
       plotOutput("tilgrid", width="100%"), br(), br(),
       sliderInput("tilleringphyllo", "Phyllochron", min = 2, max = 8,
                   value = 2, step = 1, animate = animationOptions(loop = TRUE)),
-      checkboxInput("til.showall", "Show non emerged tillers", value = FALSE)
+      fluidRow(
+        column(width=4,checkboxInput("til.showall", "Show non emerged tillers", value = FALSE)),
+        column(width=4,checkboxInput("til.color", "Color tiller cohorts", value = FALSE))
+      )
     )
   ),
   box(

@@ -42,9 +42,7 @@ getTillers <- function(n1, n2, n) {
     return(solString)
   }
 }
-drawTiller <- function(tillerString, stepSize = 15) {
-  colorList <- c("black","red","green","blue","orange","purple",
-                 "yellow","lightblue")
+drawTiller <- function(tillerString, colorList, stepSize = 15) {
   grid.newpage()
   vp <- viewport(x = 0.5, y = 0.5, width = 1, height = 1, 
                  xscale = c(0, 100), yscale = c(0, 120), name = "VP")
@@ -126,9 +124,7 @@ drawTiller <- function(tillerString, stepSize = 15) {
     }
   }
 }
-drawTiller2 <- function(tillerString, realString, stepSize = 15) {
-  colorList <- c("black","red","green","blue","orange","purple",
-                 "yellow","lightblue")
+drawTiller2 <- function(tillerString, realString, colorList, stepSize = 15) {
   grid.newpage()
   vp <- viewport(x = 0.5, y = 0.5, width = 1, height = 1, 
                  xscale = c(0, 100), yscale = c(0, 120), name = "VP")
@@ -248,6 +244,7 @@ df.til.till <- reactiveVal({
 })
 ls.til.grid <- reactiveVal()
 ls.real.grid <- reactiveVal()
+tillerColor <- reactiveVal()
 
 # Listeners
 listen.til.param <- reactive({
@@ -332,13 +329,20 @@ observeEvent(input$til.df.till_cell_edit, {
   ls.til.grid(list.tmp[3:8])
   ls.real.grid(real.tmp[3:8])
 })
+observeEvent(input$til.color, {
+  if(input$til.color) {
+    tillerColor(c("black",brewer.pal(9, "Set1")))
+  } else {
+    tillerColor(rep("black", 10))
+  }
+})
 
 # Outputs
 output$tilgrid <- renderPlot({
   if(input$til.showall) {
-    drawTiller2(realString(), tillerString())
+    drawTiller2(realString(), tillerString(), tillerColor())
   } else {
-    drawTiller(tillerString())
+    drawTiller(tillerString(), tillerColor())
   }
 })
 output$til.df.sens <- DT::renderDataTable({
