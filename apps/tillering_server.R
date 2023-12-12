@@ -228,7 +228,7 @@ fiboTiller <- function(i) {
   return((((1+sqrt(5))/2)^i - ((1-sqrt(5))/2)^i)/sqrt(5))
 }
 newTiller <- function(i, SDi, USD, LSD) {
-  return(round(fiboTiller(i-2) * sensiEquation(SDi, USD, LSD)))
+  return(round(i * sensiEquation(SDi, USD, LSD)))
 }
 
 # variables
@@ -266,8 +266,8 @@ observeEvent(listen.til.param(), {
     
     # potential and real tiller number
     df.tmp <- df.til.till()
-    for(n in 2:nrow(df.tmp)) {
-      df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
+    for(n in 3:nrow(df.tmp)) {
+      df.tmp[n, "NT"] <- newTiller(df.tmp[n-2, "TT"], df.tmp[n, "SDi"],
                                    input$tilleringUSD, input$tilleringLSD)
       df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
     }
@@ -284,8 +284,9 @@ observeEvent(listen.til.param(), {
     sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
+    pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
     nt <- round(length(pt.tmp) * sens)
-    pt.tmp <- tail(pt.tmp, nt)
+    pt.tmp <- head(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
     list.tmp <- c(list.tmp, pt.tmp)
     real.tmp <- c(real.tmp, rl)
@@ -305,8 +306,8 @@ observeEvent(input$tilleringphyllo, {
 observeEvent(input$til.df.till_cell_edit, {
   df.tmp <- df.til.till()
   df.tmp$SDi <- input$til.df.till_cell_edit$value
-  for(n in 2:nrow(df.tmp)) {
-    df.tmp[n, "NT"] <- newTiller(df.tmp[n, "Phyllochron"], df.tmp[n, "SDi"],
+  for(n in 3:nrow(df.tmp)) {
+    df.tmp[n, "NT"] <- newTiller(df.tmp[n-2, "TT"], df.tmp[n, "SDi"],
                                  input$tilleringUSD, input$tilleringLSD)
     df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
   }
@@ -320,8 +321,9 @@ observeEvent(input$til.df.till_cell_edit, {
     sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
     pt.tmp <- pt.tmp[order(pt.tmp)]
+    pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
     nt <- round(length(pt.tmp) * sens)
-    pt.tmp <- tail(pt.tmp, nt)
+    pt.tmp <- head(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
     list.tmp <- c(list.tmp, pt.tmp)
     real.tmp <- c(real.tmp, rl)

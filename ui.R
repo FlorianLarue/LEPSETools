@@ -3,7 +3,7 @@
 ##  This app contains several tools to help with work done at LEPSE  ##
 ##               around phenotyping and crop modelling               ##
 ##                       Author: Florian Larue                       ##
-##                      Last updated: 2023-12-03                     ##
+##                      Last updated: 2023-12-12                     ##
 #######################################################################
 
 ##----------------------------------------------------------------
