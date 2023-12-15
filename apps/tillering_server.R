@@ -245,14 +245,34 @@ df.til.till <- reactiveVal({
 ls.til.grid <- reactiveVal()
 ls.real.grid <- reactiveVal()
 tillerColor <- reactiveVal()
+prioRule <- reactiveVal(1)
 
 # Listeners
 listen.til.param <- reactive({
-  list(input$tilleringLSD, input$tilleringUSD)
+  list(input$tilleringLSD, input$tilleringUSD, input$til.color, 
+       input$til.prio, input$tilleringphyllo, prioRule())
 })
 
 # Observers
 observeEvent(listen.til.param(), {
+  # Tiller colors
+  if(input$til.color) {
+    tillerColor(c("black",brewer.pal(9, "Set1")))
+  } else {
+    tillerColor(rep("black", 10))
+  }
+  
+  # Prio choice
+  if(input$til.prio == "Low order, low rank") {
+    prioRule(1)
+  } else if(input$til.prio == "Low order, high rank") {
+    prioRule(2)
+  } else if(input$til.prio == "High order, low rank") {
+    prioRule(3)
+  } else {
+    prioRule(4)
+  }
+  
   # sensitivity df
   if(!is.na(input$tilleringUSD) && !is.na(input$tilleringLSD) &&
      as.numeric(input$tilleringUSD) > 0 && as.numeric(input$tilleringLSD > 0)) {
@@ -283,8 +303,19 @@ observeEvent(listen.til.param(), {
     pt <- getTillers(real.tmp[i-1], list.tmp[i-2], list.tmp)
     sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
-    pt.tmp <- pt.tmp[order(pt.tmp)]
-    pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    if(prioRule() == 1) {
+      pt.tmp <- pt.tmp[order(pt.tmp)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    } else if(prioRule() == 2) {
+      pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    } else if(prioRule() == 3) {
+      pt.tmp <- pt.tmp[order(pt.tmp)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+    } else {
+      pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+    }
     nt <- round(length(pt.tmp) * sens)
     pt.tmp <- head(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
@@ -293,8 +324,7 @@ observeEvent(listen.til.param(), {
   }
   ls.til.grid(list.tmp[3:8])
   ls.real.grid(real.tmp[3:8])
-})
-observeEvent(input$tilleringphyllo, {
+  
   if(input$tilleringphyllo > 2) {
     tillerString(ls.til.grid()[1:((input$tilleringphyllo)-2)])
     realString(ls.real.grid()[1:((input$tilleringphyllo)-2)])
@@ -320,8 +350,19 @@ observeEvent(input$til.df.till_cell_edit, {
     pt <- getTillers(real.tmp[i-1], list.tmp[i-2], list.tmp)
     sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
     pt.tmp <- unlist(strsplit(pt, ";"))
-    pt.tmp <- pt.tmp[order(pt.tmp)]
-    pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    if(prioRule() == 1) {
+      pt.tmp <- pt.tmp[order(pt.tmp)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    } else if(prioRule() == 2) {
+      pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+    } else if(prioRule() == 3) {
+      pt.tmp <- pt.tmp[order(pt.tmp)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+    } else {
+      pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+      pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+    }
     nt <- round(length(pt.tmp) * sens)
     pt.tmp <- head(pt.tmp, nt)
     pt.tmp <- paste(pt.tmp, collapse=";")
@@ -330,12 +371,62 @@ observeEvent(input$til.df.till_cell_edit, {
   }
   ls.til.grid(list.tmp[3:8])
   ls.real.grid(real.tmp[3:8])
-})
-observeEvent(input$til.color, {
-  if(input$til.color) {
-    tillerColor(c("black",brewer.pal(9, "Set1")))
+  
+  if(input$tilleringphyllo > 2) {
+    tillerString(ls.til.grid()[1:((input$tilleringphyllo)-2)])
+    realString(ls.real.grid()[1:((input$tilleringphyllo)-2)])
   } else {
-    tillerColor(rep("black", 10))
+    tillerString(NULL)
+    realString(NULL)
+  }
+})
+observeEvent(input$til.sdivec, {
+  if(length(unlist(strsplit(input$til.sdivec, ","))) == 8 &&
+     sum(is.na(as.numeric(as.numeric(unlist(strsplit(input$til.sdivec, ",")))))) == 0) {
+    df.tmp <- df.til.till()
+    df.tmp$SDi <- as.numeric(unlist(strsplit(input$til.sdivec, ",")))
+    for(n in 3:nrow(df.tmp)) {
+      df.tmp[n, "NT"] <- newTiller(df.tmp[n-2, "TT"], df.tmp[n, "SDi"],
+                                   input$tilleringUSD, input$tilleringLSD)
+      df.tmp[n, "TT"] <- df.tmp[n-1, "TT"] + df.tmp[n, "NT"]
+    }
+    df.til.till(df.tmp)
+    
+    list.tmp <- c(NA, NA)
+    real.tmp <- c(NA, NA)
+    for(i in 3:8) {
+      rl <- getTillers(real.tmp[i-1], real.tmp[i-2], real.tmp)
+      pt <- getTillers(real.tmp[i-1], list.tmp[i-2], list.tmp)
+      sens <- sensiEquation(df.til.till()[i, "SDi"], input$tilleringUSD, input$tilleringLSD)
+      pt.tmp <- unlist(strsplit(pt, ";"))
+      if(prioRule() == 1) {
+        pt.tmp <- pt.tmp[order(pt.tmp)]
+        pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+      } else if(prioRule() == 2) {
+        pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+        pt.tmp <- pt.tmp[order(nchar(pt.tmp))]
+      } else if(prioRule() == 3) {
+        pt.tmp <- pt.tmp[order(pt.tmp)]
+        pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+      } else {
+        pt.tmp <- pt.tmp[order(pt.tmp, decreasing=T)]
+        pt.tmp <- pt.tmp[order(nchar(pt.tmp), decreasing=T)]
+      }
+      nt <- round(length(pt.tmp) * sens)
+      pt.tmp <- head(pt.tmp, nt)
+      pt.tmp <- paste(pt.tmp, collapse=";")
+      list.tmp <- c(list.tmp, pt.tmp)
+      real.tmp <- c(real.tmp, rl)
+    }
+    ls.til.grid(list.tmp[3:8])
+    ls.real.grid(real.tmp[3:8])
+    if(input$tilleringphyllo > 2) {
+      tillerString(ls.til.grid()[1:((input$tilleringphyllo)-2)])
+      realString(ls.real.grid()[1:((input$tilleringphyllo)-2)])
+    } else {
+      tillerString(NULL)
+      realString(NULL)
+    }
   }
 })
 
