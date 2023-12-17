@@ -276,7 +276,7 @@ observeEvent(listen.til.param(), {
   # sensitivity df
   if(!is.na(input$tilleringUSD) && !is.na(input$tilleringLSD) &&
      as.numeric(input$tilleringUSD) > 0 && as.numeric(input$tilleringLSD > 0)) {
-    df.tmp <- data.frame(SDi = seq(from=0.2, to = 2, by = 0.1))
+    df.tmp <- data.frame(SDi = seq(from=2, to = 0.2, by = -0.1))
     for(m in 1:nrow(df.tmp)) {
       df.tmp[m, "Sensitivity"] <- sensiEquation(df.tmp[m, "SDi"], 
                                                 input$tilleringUSD, 
