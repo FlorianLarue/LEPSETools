@@ -1,6 +1,6 @@
 currentMessages <- reactiveValues(mes=list())
 excelFiles <- reactiveValues(workbook=NA, dateMesure=NA, notationMesure=NA)
-csvFiles <- reactiveValues()
+dfErrors <- reactiveVal(NA)
 
 observeEvent(input$pm.send, {
   req(input$pm.name, input$pm.message)
@@ -24,9 +24,9 @@ observeEvent(input$pm.send, {
   currentMessages$mes[[length(currentMessages$mes)+1]] <- 
     c(input$pm.name, input$pm.date, input$pm.message, input$pm.type)
 })
-
 observeEvent(input$pm.Submit, {
   req(input$phenodynmonitordf)
+  dfErrors(NA)
   if(tail(strsplit(input$phenodynmonitordf$datapath, split=".", fixed=T)[[1]], 
      n=1) %in% c("xls","xlsx")) {
     excelFiles$workbook <-
@@ -101,6 +101,8 @@ observeEvent(input$pm.Submit, {
       errorRows <- rbind(RDTrows, TCrows)
       errorRows <- errorRows[!duplicated(errorRows),]
       
+      dfErrors(errorRows)
+      
       output$pm.df <- DT::renderDT(
         errorRows,
         options = list(scrollX=TRUE),
@@ -113,6 +115,26 @@ observeEvent(input$pm.Submit, {
     
   } else {
     shinyalert("Incompatible file", "Please provide a .xls or .xlsx file",
+               type="error")
+  }
+})
+observeEvent(input$pm.ReSubmit, {
+  if(is.na(excelFiles$workbook)) {
+    shinyalert("No data processed", "Please first process an excel file",
+               type="error")
+  } else if(length(dfErrors()) == 1 && is.na(dfErrors())) {
+    shinyalert("No errors found", "No errors found, DB files can be generated without resubmitting data",
+               type="error")
+  }
+})
+observeEvent(input$pm.Generate, {
+  if(length(excelFiles$workbook) == 1 && is.na(excelFiles$workbook)) {
+    shinyalert("No data processed", "Please first process an excel file",
+               type="error")
+  } else if(length(dfErrors()) > 1 || !is.na(dfErrors())) {
+    print(length(dfErrors()))
+    print(!is.na(dfErrors()))
+    shinyalert("Errors found", "Please fix errors in data and resubmit before generating DB files",
                type="error")
   }
 })

@@ -220,7 +220,6 @@ drawTiller2 <- function(tillerString, realString, colorList, stepSize = 15) {
     }
   }
 }
-
 sensiEquation <- function(SDi, USD, LSD) {
   return(max(c(0, min(c(1, (SDi - LSD)/(USD - LSD))))))
 }

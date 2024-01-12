@@ -9,7 +9,8 @@ pm.tab1 <-  tabItem("importdata",
              completed with the information of the position of the sensors
              and the duration of the measurements"), br(),
     fileInput("phenodynmonitordf", "Upload Excel file"),
-    actionButton("pm.Submit", "Process data")
+    actionButton("pm.Submit", "Process data"),
+    actionButton("pm.ReSubmit", "Resubmit data")
   ),
   box(
     title = "Information",
@@ -26,6 +27,15 @@ pm.tab1 <-  tabItem("importdata",
     width = 12,
     collapsible = TRUE,
     DT::DTOutput("pm.df")
+  ),
+  box(
+    title = "Generate files",
+    icon = icon("file"),
+    status = "primary",
+    width = 12,
+    collapsible = TRUE,
+    actionButton("pm.Generate", "Generate DB files"),
+    verbatimTextOutput("pm.GenInfo")
   )
 )
 
