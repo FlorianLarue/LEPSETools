@@ -20,4 +20,4 @@ library(RColorBrewer)
 
 enableBookmarking("server")
 
-#options(warn=-1)
+options(warn=-1)
