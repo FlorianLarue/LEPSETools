@@ -35,7 +35,22 @@ pm.tab1 <-  tabItem("importdata",
     width = 12,
     collapsible = TRUE,
     actionButton("pm.Generate", "Generate DB files"),
-    verbatimTextOutput("pm.GenInfo")
+    actionButton("pm.saveDb", "Save DB files"),
+    verbatimTextOutput("pm.GenInfo"), br(), br(),
+    tabBox(id="dbfiles", width = 12,
+      tabPanel(
+        title = "Periode Measure Balance",
+        DT::DTOutput("dbbalance")
+      ),
+      tabPanel(
+        title = "Periode Measure Growth",
+        DT::DTOutput("dbgrowth")
+      ),
+      tabPanel(
+        title = "Periode Measure Thermocouple",
+        DT::DTOutput("dbthermo")
+      )
+    )
   )
 )
 
