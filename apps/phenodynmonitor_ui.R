@@ -35,7 +35,6 @@ pm.tab1 <-  tabItem("importdata",
     width = 12,
     collapsible = TRUE,
     actionButton("pm.Generate", "Generate DB files"),
-    actionButton("pm.saveDb", "Save DB files"),
     verbatimTextOutput("pm.GenInfo"), br(), br(),
     tabBox(id="dbfiles", width = 12,
       tabPanel(

@@ -6,6 +6,7 @@ dfErrors <- reactiveVal(NA)
 
 # Functions
 check_errors <- function() {
+  organPb <- c()
   for(r in 1:nrow(excelFiles$notationMesure)) {
     if(!is.na(excelFiles$notationMesure[r, "RDT"])) {
       splt <- strsplit(excelFiles$notationMesure[r,"RDT"], split="")[[1]]
@@ -24,11 +25,17 @@ check_errors <- function() {
         }
       }
       excelFiles$notationMesure[r,"RDT"] <- paste(newname, collapse = "")
+      if(is.na(excelFiles$notationMesure[r, "organe"]) || excelFiles$notationMesure[r, "organe"] == "" || excelFiles$notationMesure[r, "organe"] == " ") {
+        organPb <- c(organPb, excelFiles$notationMesure[r,"RDT"])
+      }
     }
   }
   
   errors <- list()
-  
+  if(length(organPb) > 0) {
+    errors[["organ"]] <- organPb
+    
+  }
   if(length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"]))]) > 0) {
     tmp <- c()
     for(s in 1:length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$RDT), "RDT"]))])) {
@@ -41,6 +48,10 @@ check_errors <- function() {
     for(s in 1:length(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"]))])) {
       errors[["Tc"]] <- c(errors[["Tc"]], unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"])[!is.na(unique(excelFiles$notationMesure[duplicated(excelFiles$notationMesure$TC), "TC"]))][s])
     }
+  }
+  
+  if(sum(is.na(excelFiles$notationMesure$site), na.rm=T) > 0 || sum(excelFiles$notationMesure$site == "", na.rm=T) > 0 || sum(excelFiles$notationMesure$site == " ", na.rm=T) > 0) {
+    errors[["site"]] <- c(sum(is.na(excelFiles$notationMesure$site), na.rm=T) + sum(excelFiles$notationMesure$site == "", na.rm=T) + sum(excelFiles$notationMesure$site == " ", na.rm=T))
   }
   return(errors)
 }
@@ -100,7 +111,9 @@ observeEvent(input$pm.Submit, {
     } else {
       output$pm.Info <- renderText({
         paste("Duplicate RDT detected:", paste0(errors[["Rdt"]], collapse=", "), "",
-              "Duplicate TC detected:", paste0(errors[["Tc"]], collapse=", "),
+              "Duplicate TC detected:", paste0(errors[["Tc"]], collapse=", "), "",
+              "Missing organs detected:", paste0(errors[["organ"]], collapse=", "), "",
+              "Site error detected:", paste0(ifelse(length(errors[["site"]]) > 0, errors[["site"]], "no"), " invalid row(s)"),
                sep="\n")
       })
       
@@ -108,7 +121,11 @@ observeEvent(input$pm.Submit, {
                      duplicated(excelFiles$notationMesure$RDT, fromLast = TRUE)), !is.na(RDT))
       TCrows <- subset(subset(excelFiles$notationMesure, duplicated(excelFiles$notationMesure$TC) | 
                       duplicated(excelFiles$notationMesure$TC, fromLast = TRUE)), !is.na(TC))
-      errorRows <- rbind(RDTrows, TCrows)
+      Siterows <- excelFiles$notationMesure[which(is.na(excelFiles$notationMesure$site)),]
+      Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == ""),])
+      Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == " "),])
+      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && (is.na(excelFiles$notationMesure$organe) || excelFiles$notationMesure$organe == "" || excelFiles$notationMesure$organe == " ")),]
+      errorRows <- rbind(Organrows, rbind(Siterows, rbind(RDTrows, TCrows)))
       errorRows <- errorRows[!duplicated(errorRows),]
       
       dfErrors(errorRows)
@@ -193,7 +210,7 @@ observeEvent(input$pm.Generate, {
         data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$RDT == h),]
         
         df1.tmp[nrow(df1.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
-        df1.tmp[nrow(df1.tmp), "numPlante"] <- paste0(unique(data.tmp$Plante), "-" ,excelFiles$dateMesure[1, "CodeManip"])
+        df1.tmp[nrow(df1.tmp), "numPlante"] <- unique(data.tmp$Plante)
         df1.tmp[nrow(df1.tmp), "nomCapteur"] <- paste0(h, "_" , unique(data.tmp$site))
         df1.tmp[nrow(df1.tmp), "site"] <- unique(data.tmp$site)
         df1.tmp[nrow(df1.tmp), "organe"] <- unique(data.tmp$organe)
@@ -209,12 +226,18 @@ observeEvent(input$pm.Generate, {
     for(i in unique(excelFiles$notationMesure$NumPotBDD)) {
       if(!is.na(i)) {
         data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$NumPotBDD == i),]
-        
+
         df2.tmp[nrow(df2.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
         df2.tmp[nrow(df2.tmp), "numPot"] <- i
-        df2.tmp[nrow(df2.tmp), "nomCapteur"] <- paste0("b",unique(data.tmp$Bal), "_", unique(data.tmp$site))
-        df2.tmp[nrow(df2.tmp), "site"] <- unique(data.tmp$site)
-        df2.tmp[nrow(df2.tmp), "traitement"] <- unique(data.tmp$traitement)
+        if(nchar(unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""])) == 1) {
+          df2.tmp[nrow(df2.tmp), "nomCapteur"] <- paste0("b00",unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""]), "_", unique(data.tmp$site[!is.na(data.tmp$site) & data.tmp$site != ""]))
+        } else if(nchar(unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""])) == 2) {
+          df2.tmp[nrow(df2.tmp), "nomCapteur"] <- paste0("b0",unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""]), "_", unique(data.tmp$site[!is.na(data.tmp$site) & data.tmp$site != ""]))
+        } else if(nchar(unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""])) == 3) {
+          df2.tmp[nrow(df2.tmp), "nomCapteur"] <- paste0("b",unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""]), "_", unique(data.tmp$site[!is.na(data.tmp$site) & data.tmp$site != ""]))
+        }
+        df2.tmp[nrow(df2.tmp), "site"] <- unique(data.tmp$site[!is.na(data.tmp$site) & data.tmp$site != ""])
+        df2.tmp[nrow(df2.tmp), "traitement"] <- unique(data.tmp$traitement[!is.na(data.tmp$traitement) & data.tmp$traitement != ""])
         df2.tmp[nrow(df2.tmp), "dateDebut"] <- excelFiles$dateMesure[1, "Col7"]
         df2.tmp[nrow(df2.tmp), "dateFin"] <- excelFiles$dateMesure[2, "Col7"]
       }
@@ -226,9 +249,8 @@ observeEvent(input$pm.Generate, {
     for(j in unique(excelFiles$notationMesure$TC)) {
       if(!is.na(j)) {
         data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$TC == j),]
-        
         df3.tmp[nrow(df3.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
-        df3.tmp[nrow(df3.tmp), "numPlante"] <- paste0(unique(data.tmp$Plante), "-" ,excelFiles$dateMesure[1, "CodeManip"])
+        df3.tmp[nrow(df3.tmp), "numPlante"] <- unique(data.tmp$Plante)
         if(nchar(j) == 1) {
           df3.tmp[nrow(df3.tmp), "nomCapteur"] <- paste0("tc0", j, "_" , unique(data.tmp$site))
         } else {
@@ -246,6 +268,7 @@ observeEvent(input$pm.Generate, {
     # Outputs
     output$dbbalance <- DT::renderDT(
       dbFiles$balance,
+      rownames= FALSE,
       extensions = "Buttons",
       server = FALSE,
       options = list(dom="Bfrtip", scrollX=TRUE, 
@@ -259,6 +282,7 @@ observeEvent(input$pm.Generate, {
     )
     output$dbgrowth <- DT::renderDT(
       dbFiles$growth,
+      rownames= FALSE,
       extensions = "Buttons",
       server = FALSE,
       options = list(dom="Bfrtip", scrollX=TRUE, 
@@ -272,6 +296,7 @@ observeEvent(input$pm.Generate, {
     )
     output$dbthermo <- DT::renderDT(
       dbFiles$thermo,
+      rownames= FALSE,
       extensions = "Buttons",
       server = FALSE,
       options = list(dom="Bfrtip", scrollX=TRUE, 
@@ -283,6 +308,8 @@ observeEvent(input$pm.Generate, {
       ),
       editable = FALSE
     )
+    shinyalert("DB files generated", "Successfully generated DB files",
+               type="success")
   }
 })
 observeEvent(input$pm.df_cell_edit, {
@@ -291,17 +318,6 @@ observeEvent(input$pm.df_cell_edit, {
     excelFiles$notationMesure[rownb, input$pm.df_cell_edit$col] <- NA
   } else {
     excelFiles$notationMesure[rownb, input$pm.df_cell_edit$col] <- input$pm.df_cell_edit$value
-  }
-})
-observeEvent(input$pm.saveDb, {
-  if(length(dbFiles$growth) == 0 && is.na(dbFiles$growth)) {
-    shinyalert("No DB files generated", "Please first generate DB files",
-               type="error")
-  } else {
-    print(paste0(strsplit(input$phenodynmonitordf$name, split="[.]")[[1]][1], "_growth.csv"))
-    print(paste0(strsplit(input$phenodynmonitordf$name, split="[.]")[[1]][1], "_balance.csv"))
-    print(paste0(strsplit(input$phenodynmonitordf$name, split="[.]")[[1]][1], "_thermo.csv"))
-    #write.csv(dbFiles$growth, "")
   }
 })
 
