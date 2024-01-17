@@ -124,9 +124,10 @@ observeEvent(input$pm.Submit, {
       Siterows <- excelFiles$notationMesure[which(is.na(excelFiles$notationMesure$site)),]
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == ""),])
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == " "),])
-      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == ""),]
-      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == " "),])
-      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && is.na(excelFiles$notationMesure$organe)),])
+      tmpOrgan <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT)),]
+      Organrows <- tmpOrgan[which(tmpOrgan$organe == ""),]
+      Organrows <- rbind(Organrows, tmpOrgan[which(tmpOrgan$organe == " "),])
+      Organrows <- rbind(Organrows, tmpOrgan[which(is.na(tmpOrgan$organe)),])
       errorRows <- rbind(Organrows, rbind(Siterows, rbind(RDTrows, TCrows)))
       errorRows <- errorRows[!duplicated(errorRows),]
       
@@ -187,9 +188,10 @@ observeEvent(input$pm.ReSubmit, {
       Siterows <- excelFiles$notationMesure[which(is.na(excelFiles$notationMesure$site)),]
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == ""),])
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == " "),])
-      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == ""),]
-      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == " "),])
-      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && is.na(excelFiles$notationMesure$organe)),])
+      tmpOrgan <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT)),]
+      Organrows <- tmpOrgan[which(tmpOrgan$organe == ""),]
+      Organrows <- rbind(Organrows, tmpOrgan[which(tmpOrgan$organe == " "),])
+      Organrows <- rbind(Organrows, tmpOrgan[which(is.na(tmpOrgan$organe)),])
       errorRows <- rbind(Organrows, rbind(Siterows, rbind(RDTrows, TCrows)))
       errorRows <- errorRows[!duplicated(errorRows),]
       
