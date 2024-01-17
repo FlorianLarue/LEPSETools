@@ -124,7 +124,9 @@ observeEvent(input$pm.Submit, {
       Siterows <- excelFiles$notationMesure[which(is.na(excelFiles$notationMesure$site)),]
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == ""),])
       Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == " "),])
-      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && (is.na(excelFiles$notationMesure$organe) || excelFiles$notationMesure$organe == "" || excelFiles$notationMesure$organe == " ")),]
+      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == ""),]
+      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == " "),])
+      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && is.na(excelFiles$notationMesure$organe)),])
       errorRows <- rbind(Organrows, rbind(Siterows, rbind(RDTrows, TCrows)))
       errorRows <- errorRows[!duplicated(errorRows),]
       
@@ -156,6 +158,7 @@ observeEvent(input$pm.ReSubmit, {
     errors <- check_errors()
     if(length(errors) == 0) {
       dfErrors(NA)
+      
       output$pm.Info <- renderText({
         paste("No errors in file")
       })
@@ -166,12 +169,14 @@ observeEvent(input$pm.ReSubmit, {
         editable = FALSE
       )
       
-      shinyalert("Errors fixed", "Succesfully fixed errors",
+      shinyalert("Excel file loaded", "Succesfully loaded the Excel file without errors",
                  type="success")
     } else {
       output$pm.Info <- renderText({
         paste("Duplicate RDT detected:", paste0(errors[["Rdt"]], collapse=", "), "",
-              "Duplicate TC detected:", paste0(errors[["Tc"]], collapse=", "),
+              "Duplicate TC detected:", paste0(errors[["Tc"]], collapse=", "), "",
+              "Missing organs detected:", paste0(errors[["organ"]], collapse=", "), "",
+              "Site error detected:", paste0(ifelse(length(errors[["site"]]) > 0, errors[["site"]], "no"), " invalid row(s)"),
               sep="\n")
       })
       
@@ -179,7 +184,13 @@ observeEvent(input$pm.ReSubmit, {
                                  duplicated(excelFiles$notationMesure$RDT, fromLast = TRUE)), !is.na(RDT))
       TCrows <- subset(subset(excelFiles$notationMesure, duplicated(excelFiles$notationMesure$TC) | 
                                 duplicated(excelFiles$notationMesure$TC, fromLast = TRUE)), !is.na(TC))
-      errorRows <- rbind(RDTrows, TCrows)
+      Siterows <- excelFiles$notationMesure[which(is.na(excelFiles$notationMesure$site)),]
+      Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == ""),])
+      Siterows <- rbind(Siterows, excelFiles$notationMesure[which(excelFiles$notationMesure$site == " "),])
+      Organrows <- excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == ""),]
+      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && excelFiles$notationMesure$organe == " "),])
+      Organrows <- rbind(Organrows, excelFiles$notationMesure[which(!is.na(excelFiles$notationMesure$RDT) && is.na(excelFiles$notationMesure$organe)),])
+      errorRows <- rbind(Organrows, rbind(Siterows, rbind(RDTrows, TCrows)))
       errorRows <- errorRows[!duplicated(errorRows),]
       
       dfErrors(errorRows)
