@@ -58,6 +58,7 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
         ),
         column(width=12, align="center",
           actionButton("previousS", "Previous"),
+          actionButton("saveChanges", "Save changes"),
           actionButton("nextS", "Next")
         )
       ),
@@ -92,12 +93,29 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
           )
         )
       ),
+      box(title=downloadBttn("downloadParams", "SQ Parameters", size = "sm"), height="100%", width=12,
+        status="purple", icon = icon("sliders"), collapsible = TRUE ,
+        fluidRow(
+          checkboxInput("sqpar", "Check this box to start SQ parameter calc",
+            value=FALSE),
+        ), 
+        fluidRow(
+          column(width=6,
+            radioButtons("sqpar.sel", "Check which parameter to compute",
+              choices = c("AreaPL","AreaSL","NLL","RatioFLPL"), selected = "AreaPL"),
+            actionButton("sqpar.val", label="Compute")
+          ),
+          column(width=6,
+            verbatimTextOutput("sqpar.text"),
+            actionButton("sqpar.save", label="Save parameters")
+          )
+        )
+      ),
       box(title="History", height="100%", width=12, 
         status = "warning", icon = icon("clock-rotate-left"), 
         collapsible = TRUE,
         fluidRow(
           column(width=6, align="center",
-                 actionButton("saveChanges", "Save changes"),
                  downloadButton("downloadData", "Download dataframe"),
                  actionButton("resetall", "Reset all"),
                  DT::dataTableOutput("lp.df")

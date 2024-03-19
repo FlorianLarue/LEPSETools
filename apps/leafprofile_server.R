@@ -1,7 +1,7 @@
 # Variables
 df.lp.init <- reactiveVal(); df.lp.init.o <- reactiveVal()
 df.lp <- reactiveVal(); df.changes <- reactiveVal(data.frame())
-df.changes.f <- reactiveVal(data.frame())
+df.sq <- reactiveVal(data.frame()); df.changes.f <- reactiveVal(data.frame())
 lp.var.c <- reactiveVal(); lp.irrig.c <- reactiveVal()
 lp.semis.c <- reactiveVal()
 date.sel <- reactiveVal(NA);date.sel.p <- reactiveVal(NA)
@@ -13,6 +13,7 @@ col.names <- reactiveVal(
 col.user <- reactiveVal()
 path.save <- reactiveVal()
 volumes <- getVolumes()()
+sq.params <- reactiveValues(AreaPL = NA, AreaSL = NA, NLL = NA, RatioFLPL = NA)
 
 # Functions
 updateHistory <- function(v, s, i, d, p, r, a) {
@@ -59,7 +60,6 @@ observe({
     path.save(paste0(tmp.path,"/", Sys.Date()))
   }
 })
-
 observeEvent(input$leafprofiledf,{
   df.input <- data.frame(fread(input$leafprofiledf$datapath))
   df.input$sel <- 16
@@ -88,7 +88,6 @@ observeEvent(input$leafprofiledf,{
   df.lp.init(df.input)
   df.lp.init.o(df.input)
 })
-
 observeEvent(input$cn.Submit, {
   req(input$leafprofiledf)
   df.tmp <- df.lp.init()
@@ -113,19 +112,15 @@ observeEvent(input$cn.Submit, {
              "Upon saving your work, original column names will be restored"),
              type="success")
 })
-
 observeEvent(input$leafprofilevar, {
   lp.var.c(input$leafprofilevar)
 })
-
 observeEvent(input$leafprofileirrig, {
   lp.irrig.c(input$leafprofileirrig)
 })
-
 observeEvent(input$leafprofilesemis, {
   lp.semis.c(input$leafprofilesemis)
 })
-
 observeEvent(listen.lp.sel(), {
   output$pp.plot <- NULL
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -133,108 +128,187 @@ observeEvent(listen.lp.sel(), {
                              df.lp.init()$Irrigation == input$leafprofileirrig &
                              df.lp.init()$Sowing == input$leafprofilesemis),])
 })
-
 observeEvent(input$plot_click, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
-  
-  # Extract the selected data
-  df.tmp <- nearPoints(df.lp(), input$plot_click, allRows=TRUE)
-  df.tmp.sel <- df.tmp[which(df.tmp$Variety == input$leafprofilevar &
-                               df.tmp$Irrigation == input$leafprofileirrig &
-                               df.tmp$Sowing == input$leafprofilesemis),]
-  # Change the status of selected data (identify in the "sel" column)
-  for(d in unique(df.tmp.sel$Date)) {
-    if(sum(df.tmp.sel[which(df.tmp.sel$Date == d),
-                      "selected_"],na.rm=T) > 0) {
-      if(df.tmp.sel[which(df.tmp.sel$Date == d),"sel"][1] == 13) {
-        df.tmp.sel[which(df.tmp.sel$Date == d),"sel"] <- 16
-        df.tmp.sel$sel.p <- 16
-        if(13 %in% df.tmp.sel$sel) {
-          if(d == date.sel()) {
-            date.sel(date.sel.p())
+  if(!input$sqpar) {
+    # Extract the selected data
+    df.tmp <- nearPoints(df.lp(), input$plot_click, allRows=TRUE)
+    df.tmp.sel <- df.tmp[which(df.tmp$Variety == input$leafprofilevar &
+                                 df.tmp$Irrigation == input$leafprofileirrig &
+                                 df.tmp$Sowing == input$leafprofilesemis),]
+    # Change the status of selected data (identify in the "sel" column)
+    for(d in unique(df.tmp.sel$Date)) {
+      if(sum(df.tmp.sel[which(df.tmp.sel$Date == d),
+                        "selected_"],na.rm=T) > 0) {
+        if(df.tmp.sel[which(df.tmp.sel$Date == d),"sel"][1] == 13) {
+          df.tmp.sel[which(df.tmp.sel$Date == d),"sel"] <- 16
+          df.tmp.sel$sel.p <- 16
+          if(13 %in% df.tmp.sel$sel) {
+            if(d == date.sel()) {
+              date.sel(date.sel.p())
+            }
+          } else {
+            date.sel(NA)
+            output$lp.selRank <- NULL
+            output$lp.selPlant <- NULL
           }
         } else {
-          date.sel(NA)
-          output$lp.selRank <- NULL
-          output$lp.selPlant <- NULL
+          if(13 %in% df.tmp.sel$sel) {
+            date.sel.p(date.sel())
+          } else {
+            date.sel.p(NA)
+          }
+          df.tmp.sel[which(df.tmp.sel$Date == d),"sel"] <- 13
+          date.sel(d)
         }
-      } else {
-        if(13 %in% df.tmp.sel$sel) {
-          date.sel.p(date.sel())
-        } else {
-          date.sel.p(NA)
-        }
-        df.tmp.sel[which(df.tmp.sel$Date == d),"sel"] <- 13
-        date.sel(d)
       }
     }
-  }
-  df.tmp[which(df.tmp$Variety == input$leafprofilevar &
-                 df.tmp$Irrigation == input$leafprofileirrig &
-                 df.tmp$Sowing == input$leafprofilesemis),] <- df.tmp.sel
-  
-  # Create output to allow for rank selection and deletion
-  if(13 %in% df.tmp$sel) {
-    output$lp.selRank <- renderUI({
-      div(
-        selectizeInput(inputId = "leafprofilerank", 
-                       label = "Select a leaf rank", width = "100%",
-                       choices = df.tmp[which(df.tmp$sel == 13 & 
-                              !is.na(df.tmp$Leafarea) &
-                              !is.na(df.tmp$Leafrank)),"Leafrank"]),
-        actionButton("delrank", label="Delete rank", icon=icon("trash")))
-    }) 
-  }
-  
-  # Replace data in original dataframe
-  df.tmp <- df.tmp[,-c(ncol(df.tmp))]
-  df.lp(df.tmp)
-  
-  # Create output for per-plant plot
-  if(!is.na(date.sel())) {
-    if(input$ppplot) {
-      output$pp.plot <- renderPlot({
-        df.pp <- df.lp()
-        df.pp <- df.pp[which(df.pp$Variety == input$leafprofilevar & 
-                               df.pp$Irrigation == input$leafprofileirrig &
-                               df.pp$Sowing == input$leafprofilesemis &
-                               df.pp$Date == date.sel() & 
-                               df.pp$iso == 1),]
-        df.tmp2 <- df.pp %>%
-          summarise(nbmax = mean(MaxLeaves, na.rm=T))
-        ggplot(df.pp, aes(x = Leafrank, y = Leafarea, 
-                          col = as.factor(PlantNb))) + 
-          geom_line() + geom_point(shape=df.pp$sel.p) + 
-          xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
-          scale_x_continuous(breaks = function(x)
-            unique(floor(pretty(seq(0, (max(df.tmp2$nbmax,
-                                            na.rm=T)+1)*1.1))))) +
-          geom_vline(data=df.tmp2, aes(xintercept=nbmax),
-                     linetype = "dashed", col="red") +
-          guides(shape="none", col=guide_legend(nrow=2)) +
-          theme(legend.position = "bottom", legend.title = element_blank(),
-                legend.text = element_text(size=6))
-      }, height = 500, res = 150)
-      
-      # Create output to allow for plant selection and deletion
-      output$lp.selPlant <- renderUI({
-        div(selectizeInput(inputId = "leafprofileplant", 
-                           label = "Select a plant or leaf number",
-                           width = "100%",
-                           choices = sort(unique(unlist(
-                             df.tmp[which(df.tmp$Date == date.sel() & 
-                                            !is.na(df.tmp$Leafarea) &
-                                            !is.na(df.tmp$Leafrank)),
-                                    c("PlantNb","Leafrank")])))),
-            actionButton("delplant", label="Delete plant", icon=icon("trash")),
-            actionButton("delleaf", label="Delete leaf", icon=icon("trash")))
-      })
+    df.tmp[which(df.tmp$Variety == input$leafprofilevar &
+                   df.tmp$Irrigation == input$leafprofileirrig &
+                   df.tmp$Sowing == input$leafprofilesemis),] <- df.tmp.sel
+    
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                !is.na(df.tmp$Leafarea) &
+                                !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+    
+    # Replace data in original dataframe
+    df.tmp <- df.tmp[,-c(ncol(df.tmp))]
+    df.lp(df.tmp)
+    
+    # Create output for per-plant plot
+    if(!is.na(date.sel())) {
+      if(input$ppplot) {
+        output$pp.plot <- renderPlot({
+          df.pp <- df.lp()
+          df.pp <- df.pp[which(df.pp$Variety == input$leafprofilevar & 
+                                 df.pp$Irrigation == input$leafprofileirrig &
+                                 df.pp$Sowing == input$leafprofilesemis &
+                                 df.pp$Date == date.sel() & 
+                                 df.pp$iso == 1),]
+          df.tmp2 <- df.pp %>%
+            summarise(nbmax = mean(MaxLeaves, na.rm=T))
+          ggplot(df.pp, aes(x = Leafrank, y = Leafarea, 
+                            col = as.factor(PlantNb))) + 
+            geom_line() + geom_point(shape=df.pp$sel.p) + 
+            xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+            scale_x_continuous(breaks = function(x)
+              unique(floor(pretty(seq(0, (max(df.tmp2$nbmax,
+                                              na.rm=T)+1)*1.1))))) +
+            geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                       linetype = "dashed", col="red") +
+            guides(shape="none", col=guide_legend(nrow=2)) +
+            theme(legend.position = "bottom", legend.title = element_blank(),
+                  legend.text = element_text(size=6))
+        }, height = 500, res = 150)
+        
+        # Create output to allow for plant selection and deletion
+        output$lp.selPlant <- renderUI({
+          div(selectizeInput(inputId = "leafprofileplant", 
+                             label = "Select a plant or leaf number",
+                             width = "100%",
+                             choices = sort(unique(unlist(
+                               df.tmp[which(df.tmp$Date == date.sel() & 
+                                              !is.na(df.tmp$Leafarea) &
+                                              !is.na(df.tmp$Leafrank)),
+                                      c("PlantNb","Leafrank")])))),
+              actionButton("delplant", label="Delete plant", icon=icon("trash")),
+              actionButton("delleaf", label="Delete leaf", icon=icon("trash")))
+        })
+      }
+    } else {
+      output$pp.plot <- NULL
     }
   } else {
-    output$pp.plot <- NULL
+    # (De)Select clicked points
+    df.tmp <- nearPoints(df.lp(), input$plot_click, allRows=TRUE)
+    for(m in unique(df.tmp[which(df.tmp$selected_ == TRUE), "Meanarea"])) {
+      if(unique(df.tmp[which(df.tmp$Meanarea == m),"sel"]) == 16) {
+        df.tmp[which(df.tmp$Meanarea == m),"sel"] <- 13
+      } else {
+        df.tmp[which(df.tmp$Meanarea == m),"sel"] <- 16
+      }
+    }
+    # Replace data in original dataframe
+    df.tmp <- df.tmp[,-c(ncol(df.tmp))]
+    df.lp(df.tmp)
   }
 })
-
+observeEvent(input$sqpar.sel, {
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+  df.tmp <- df.lp()
+  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  df.lp(df.tmp)
+})
+observeEvent(input$sqpar, {
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+  df.tmp <- df.lp()
+  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  df.lp(df.tmp)
+  output$lp.selRank <- NULL
+  output$lp.selPlant <- NULL
+  output$pp.plot <- NULL
+})
+observeEvent(input$sqpar.val, {
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+  df.tmp <- df.lp()
+  if(nrow(df.tmp[which(df.tmp$sel == 13),]) == 0) {
+    shinyalert("Error", 
+               paste0("Please select points on the plot to compute SQ parameters"),
+               type="error")
+  } else {
+    switch(input$sqpar.sel, 
+      "AreaPL" = {
+        sq.params$AreaPL <- mean(df.tmp[which(df.tmp$sel == 13),"Meanarea"], na.rm=T)
+      },
+      "AreaSL" = {
+        sq.params$AreaSL <- mean(df.tmp[which(df.tmp$sel == 13),"Meanarea"], na.rm=T)
+      },
+      "NLL" = {
+        lm.res <- lm(df.tmp[which(df.tmp$sel == 13),"Leafrank"] ~ df.tmp[which(df.tmp$sel == 13),"Meanarea"])
+        sq.params$NLL <- as.numeric(lm.res$coefficients[1])
+      },
+      "RatioFLPL" = {
+        sq.params$RatioFLPL <- min(unique(df.tmp[which(df.tmp$sel == 13),"Meanarea"]),na.rm=T)/
+          max(unique(df.tmp[which(df.tmp$sel == 13),"Meanarea"]),na.rm=T)
+      }
+    )
+  }
+})
+observeEvent(input$sqpar.save, {
+  req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+  id <- paste(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis, sep="_")
+  df.tmp <- df.sq()
+  if(nrow(df.tmp) == 0) {
+    df.tmp[1, "id"] <- id
+    df.tmp[1, "AreaPL"] <- sq.params$AreaPL
+    df.tmp[1, "AreaSL"] <- sq.params$AreaSL
+    df.tmp[1, "NLL"] <- sq.params$NLL
+    df.tmp[1, "RatioFLPL"] <- sq.params$RatioFLPL
+  } else {
+    if(id %in% df.tmp$id) {
+      df.tmp[which(df.tmp$id == id), "AreaPL"] <- sq.params$AreaPL
+      df.tmp[which(df.tmp$id == id), "AreaSL"] <- sq.params$AreaSL
+      df.tmp[which(df.tmp$id == id), "NLL"] <- sq.params$NLL
+      df.tmp[which(df.tmp$id == id), "RatioFLPL"] <- sq.params$RatioFLPL
+    } else {
+      df.tmp[nrow(df.tmp)+1, "id"] <- id
+      df.tmp[nrow(df.tmp), "AreaPL"] <- sq.params$AreaPL
+      df.tmp[nrow(df.tmp), "AreaSL"] <- sq.params$AreaSL
+      df.tmp[nrow(df.tmp), "NLL"] <- sq.params$NLL
+      df.tmp[nrow(df.tmp), "RatioFLPL"] <- sq.params$RatioFLPL
+    }
+  }
+  df.sq(df.tmp)
+})
 observeEvent(input$plot_click2, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   
@@ -266,7 +340,6 @@ observeEvent(input$plot_click2, {
   df.tmp <- df.tmp[,-c(ncol(df.tmp))]
   df.lp(df.tmp)
 })
-
 observeEvent(input$leftshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -284,7 +357,6 @@ observeEvent(input$leftshift, {
   output$lp.selPlant <- NULL
   output$pp.plot <- NULL
 })
-
 observeEvent(input$pp.leftshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -303,7 +375,6 @@ observeEvent(input$pp.leftshift, {
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
   df.lp(df.tmp)
 })
-
 observeEvent(input$rightshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -321,7 +392,6 @@ observeEvent(input$rightshift, {
   output$lp.selPlant <- NULL
   output$pp.plot <- NULL
 })
-
 observeEvent(input$pp.rightshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -340,7 +410,6 @@ observeEvent(input$pp.rightshift, {
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
   df.lp(df.tmp)
 })
-
 observeEvent(input$inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -368,7 +437,6 @@ observeEvent(input$inverse, {
   output$lp.selPlant <- NULL
   output$pp.plot <- NULL
 })
-
 observeEvent(input$pp.inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
@@ -397,7 +465,6 @@ observeEvent(input$pp.inverse, {
   df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
   df.lp(df.tmp)
 })
-
 observeEvent(input$delrank, {
   df.tmp <- df.lp()
   df.tmp[which(df.tmp$sel == 13 & df.tmp$Leafrank == input$leafprofilerank),
@@ -418,7 +485,6 @@ observeEvent(input$delrank, {
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
 })
-
 observeEvent(input$delplant, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis,
       input$leafprofileplant)
@@ -434,7 +500,6 @@ observeEvent(input$delplant, {
                 as.character(input$leafprofileplant), "all", "Delete")
   df.lp(df.tmp)
 })
-
 observeEvent(input$delleaf, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis,
       input$leafprofileplant)
@@ -455,7 +520,6 @@ observeEvent(input$delleaf, {
     df.lp(df.tmp)
   }
 })
-
 observeEvent(input$pp.isolate, {
   df.tmp <- df.lp()
   if(0 %in% df.tmp$iso) {
@@ -469,7 +533,6 @@ observeEvent(input$pp.isolate, {
   }
   df.lp(df.tmp)
 })
-
 observeEvent(df.lp(), {
   output$lp.df <- DT::renderDataTable({
     DT::datatable(
@@ -517,7 +580,6 @@ observeEvent(df.lp(), {
       plt
   }, height = 500, res = 150)
 })
-
 observeEvent(df.changes(), {
   output$changes.df <- DT::renderDataTable({
     DT::datatable(
@@ -531,7 +593,6 @@ observeEvent(df.changes(), {
       rownames = FALSE)
   })
 })
-
 observeEvent(input$saveChanges, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   output$lp.selPlant <- NULL
@@ -563,7 +624,6 @@ observeEvent(input$saveChanges, {
                                   input$leafprofiledf$name))
   }
 })
-
 observeEvent(input$reset, {
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
@@ -575,7 +635,6 @@ observeEvent(input$reset, {
                            df.lp.init()$Sowing == input$leafprofilesemis),])
   df.changes(df.changes.f())
 })
-
 observeEvent(input$resetall, {
   df.lp.init(df.lp.init.o())
   output$lp.df <- NULL
@@ -586,7 +645,6 @@ observeEvent(input$resetall, {
   df.changes(data.frame())
   df.changes.f(data.frame())
 })
-
 observeEvent(input$nextS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis) 
@@ -615,7 +673,6 @@ observeEvent(input$nextS, {
     }
   }
 })
-
 observeEvent(input$previousS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis)
@@ -644,7 +701,6 @@ observeEvent(input$previousS, {
     }
   }
 })
-
 observeEvent(input$revert, {
   req(input$changes.df_rows_selected)
   output$lp.selRank <- NULL
@@ -697,6 +753,13 @@ observeEvent(input$revert, {
 })
 
 # Outputs
+output$sqpar.text <- renderText({
+  paste0("Computed SQ parameter values:", "\n", "\n",
+        "AreaPL = ", sq.params$AreaPL, "\n",
+        "AreaSL = ", sq.params$AreaSL, "\n",
+        "NLL = ", sq.params$NLL, "\n",
+        "RatioFLPL = ", sq.params$RatioFLPL)  
+})
 
 output$downloadData <- downloadHandler(
   filename = function() {
@@ -708,7 +771,6 @@ output$downloadData <- downloadHandler(
     write.csv(df.tmp, file, row.names = FALSE)
   }
 )
-
 output$downloadHistory <- downloadHandler(
   filename = function() {
     "leafprofile_history.csv"
@@ -717,7 +779,6 @@ output$downloadHistory <- downloadHandler(
     write.csv(df.changes.f(), file, row.names = FALSE)
   }
 )
-
 output$downloadPlots <- downloadHandler(
   filename = function() {
     "leafprofilePlots.pdf"
@@ -739,5 +800,13 @@ output$downloadPlots <- downloadHandler(
       suppressWarnings(print(plt))
     }
     dev.off()
+  }
+)
+output$downloadParams <- downloadHandler(
+  filename = function() {
+    "SQparameters.csv"
+  },
+  content = function(file) {
+    write.csv(df.sq(), file, row.names = FALSE)
   }
 )
