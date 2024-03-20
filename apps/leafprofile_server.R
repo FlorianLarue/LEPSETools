@@ -13,7 +13,8 @@ col.names <- reactiveVal(
 col.user <- reactiveVal()
 path.save <- reactiveVal()
 volumes <- getVolumes()()
-sq.params <- reactiveValues(AreaPL = NA, AreaSL = NA, NLL = NA, RatioFLPL = NA)
+sq.params <- reactiveValues(AreaPL = NA, AreaSL = NA, NLL = NA, RatioFLPL = NA, NLL_lm = NA)
+nll.comp <- reactiveVal(FALSE)
 
 # Functions
 updateHistory <- function(v, s, i, d, p, r, a) {
@@ -247,6 +248,7 @@ observeEvent(input$sqpar.sel, {
   df.tmp <- df.lp()
   df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
   df.lp(df.tmp)
+  nll.comp(FALSE)
 })
 observeEvent(input$sqpar, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -273,8 +275,10 @@ observeEvent(input$sqpar.val, {
         sq.params$AreaSL <- mean(df.tmp[which(df.tmp$sel == 13),"Meanarea"], na.rm=T)
       },
       "NLL" = {
-        lm.res <- lm(df.tmp[which(df.tmp$sel == 13),"Leafrank"] ~ df.tmp[which(df.tmp$sel == 13),"Meanarea"])
-        sq.params$NLL <- as.numeric(lm.res$coefficients[1])
+        lm.res <- lm(df.tmp[which(df.tmp$sel == 13),"Meanarea"] ~ df.tmp[which(df.tmp$sel == 13),"Leafrank"])
+        sq.params$NLL <- -coef(lm.res)[1]/coef(lm.res)[2]
+        sq.params$NLL_lm <- lm.res
+        nll.comp(TRUE)
       },
       "RatioFLPL" = {
         sq.params$RatioFLPL <- min(unique(df.tmp[which(df.tmp$sel == 13),"Meanarea"]),na.rm=T)/
@@ -288,6 +292,7 @@ observeEvent(input$sqpar.save, {
   id <- paste(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis, sep="_")
   df.tmp <- df.sq()
   if(nrow(df.tmp) == 0) {
+    nll.comp(FALSE)
     df.tmp[1, "id"] <- id
     df.tmp[1, "AreaPL"] <- sq.params$AreaPL
     df.tmp[1, "AreaSL"] <- sq.params$AreaSL
@@ -577,7 +582,10 @@ observeEvent(df.lp(), {
       guides(shape="none", col=guide_legend(nrow=2)) +
       theme(legend.position = "bottom", legend.title = element_blank(),
             legend.text = element_text(size=6))
-      plt
+    if(nll.comp() == TRUE) {
+      plt <- plt + geom_abline(intercept = coef(sq.params$NLL_lm)[1], slope = coef(sq.params$NLL_lm)[2])
+    }
+    plt
   }, height = 500, res = 150)
 })
 observeEvent(df.changes(), {
@@ -648,6 +656,7 @@ observeEvent(input$resetall, {
 observeEvent(input$nextS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis) 
+  nll.comp(FALSE)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
   if(input$leafprofilesemis == "S1") { # case 1 : change only sowing
@@ -676,6 +685,7 @@ observeEvent(input$nextS, {
 observeEvent(input$previousS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis)
+  nll.comp(FALSE)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
   if(input$leafprofilesemis == "S2") { # case 1 : change only sowing
