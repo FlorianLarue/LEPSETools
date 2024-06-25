@@ -96,18 +96,30 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
       box(title=downloadBttn("downloadParams", "SQ Parameters", size = "sm"), height="100%", width=12,
         status="purple", icon = icon("sliders"), collapsible = TRUE ,
         fluidRow(
-          checkboxInput("sqpar", "Check this box to start SQ parameter calc",
-            value=FALSE),
-        ), 
-        fluidRow(
-          column(width=6,
-            radioButtons("sqpar.sel", "Check which parameter to compute",
-              choices = c("AreaPL","AreaSL","NLL","RatioFLPL"), selected = "AreaPL"),
-            actionButton("sqpar.val", label="Compute")
+          column(width=4, align = "center",
+            checkboxInput("sqpar", "Check this box to start MANUAL SQ parameter calc", value=FALSE),
+            fluidRow(
+              column(width=12,
+                radioButtons("sqpar.sel", "Check which parameter to compute",
+                            choices = c("AreaPL","AreaSL","NLL","RatioFLPL"), selected = "AreaPL"),
+                actionButton("sqpar.val", label="Compute")
+              )
+            )
           ),
-          column(width=6,
+          column(width=4, align = "center",
             verbatimTextOutput("sqpar.text"),
             actionButton("sqpar.save", label="Save parameters")
+          ),
+          column(width=4, align = "center",
+            column(width=12,
+              checkboxInput("sqparA", "Check this box to start AUTO SQ parameter calc", value=FALSE),
+              verbatimTextOutput("sqparA.text")
+            )
+          )
+        ), br(),
+        fluidRow(
+          column(width=8, offset = 2, align="center",
+            plotOutput("sq.plot", height="100%")
           )
         )
       ),

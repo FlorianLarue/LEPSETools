@@ -1,11 +1,18 @@
 # Variables
-df.lp.init <- reactiveVal(); df.lp.init.o <- reactiveVal()
-df.lp <- reactiveVal(); df.changes <- reactiveVal(data.frame())
-df.sq <- reactiveVal(data.frame()); df.changes.f <- reactiveVal(data.frame())
-lp.var.c <- reactiveVal(); lp.irrig.c <- reactiveVal()
-lp.semis.c <- reactiveVal()
-date.sel <- reactiveVal(NA);date.sel.p <- reactiveVal(NA)
+df.lp.init <- reactiveVal() #initial dataframe that will be modified when changing leaf profiles
+df.lp.init.o <- reactiveVal() #initial dataframe that will remain unchanged, used if everything needs to be reset
+df.lp <- reactiveVal() #active dataframe for a given situation (Variety x Modalities)
+df.changes <- reactiveVal(data.frame()) #dataframe used to track all changes made
+df.sq <- reactiveVal(data.frame()) #dataframe of SQ parameter values, appended for each situation (Variety x Modalities)
+df.changes.f <- reactiveVal(data.frame()) #snapshot of df.changes used in case of partial reset, used to save to file
+df.lp.init.sq <- reactiveVal() #dataframe to store df.lp.init with modified point shapes according to SQ parameters
+df.lp.sq <- reactiveVal(data.frame()) #dataframe to store df.lp with modified point shapes according to SQ parameters
+lp.var.c <- reactiveVal(); lp.irrig.c <- reactiveVal(); lp.semis.c <- reactiveVal()
+date.sel <- reactiveVal(NA); date.sel.p <- reactiveVal(NA)
 max.plants <- reactiveVal(0); max.leaves <- reactiveVal(0)
+sq.params <- reactiveValues(AreaPL = NA, AreaSL = NA, NLL = NA, RatioFLPL = NA, NLL_lm = NA, warn=0)
+warn.sqpa <- reactiveVal()
+nll.comp <- reactiveVal(FALSE); auto.sq <- reactiveVal(FALSE)
 col.names <- reactiveVal(
   c("Variety","Sowing","Irrigation","Date","Leafrank","Leafarea","Medianarea",
     "Meanarea","SDarea","PlantNb","LeafNb","MaxLeaves")
@@ -13,8 +20,6 @@ col.names <- reactiveVal(
 col.user <- reactiveVal()
 path.save <- reactiveVal()
 volumes <- getVolumes()()
-sq.params <- reactiveValues(AreaPL = NA, AreaSL = NA, NLL = NA, RatioFLPL = NA, NLL_lm = NA)
-nll.comp <- reactiveVal(FALSE)
 
 # Functions
 updateHistory <- function(v, s, i, d, p, r, a) {
@@ -128,6 +133,13 @@ observeEvent(listen.lp.sel(), {
   df.lp(df.lp.init()[which(df.lp.init()$Variety == input$leafprofilevar &
                              df.lp.init()$Irrigation == input$leafprofileirrig &
                              df.lp.init()$Sowing == input$leafprofilesemis),])
+  df.lp.sq(data.frame())
+  sq.params$AreaPL <- NA
+  sq.params$AreaSL <- NA
+  sq.params$NLL <- NA
+  sq.params$RatioFLPL <- NA
+  sq.params$NLL_lm <- NA
+  output$sq.plot <- NULL
 })
 observeEvent(input$plot_click, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -249,70 +261,196 @@ observeEvent(input$sqpar.sel, {
   df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
   df.lp(df.tmp)
   nll.comp(FALSE)
+  auto.sq(FALSE)
+  updateCheckboxInput(session, "sqparA", value = FALSE)
 })
 observeEvent(input$sqpar, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
   df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  for(i in 1:nrow(df.tmp)) {
+    if(!is.na(df.tmp[i, "Leafrank"])) {
+      df.tmp[i, "ConsensusArea"] <- mean(unique(df.tmp[which(df.tmp$Leafrank == df.tmp[i, "Leafrank"]), "Medianarea"]), na.rm=T)
+    }
+  }
   df.lp(df.tmp)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
   output$pp.plot <- NULL
 })
+observeEvent(input$sqparA, {
+  if(input$sqparA == TRUE) {
+    auto.sq(TRUE)
+    req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
+    df.tmp <- df.lp()
+    df.tmp$SQpar <- "Not Used"
+    for(i in 1:nrow(df.tmp)) {
+      if(!is.na(df.tmp[i, "Leafrank"])) {
+        df.tmp[i, "ConsensusArea"] <- mean(unique(df.tmp[which(df.tmp$Leafrank == df.tmp[i, "Leafrank"]), "Medianarea"]), na.rm=T)
+      }
+    }
+    penultRank <-  unique(df.tmp[which(df.tmp$Leafrank == max(df.tmp[which(!is.na(df.tmp$ConsensusArea)), "Leafrank"], na.rm=T) - 1), "Leafrank"], na.rm=T)
+    
+    # Change symbols for points and compute params
+    df.tmp[which(df.tmp$Leafrank == penultRank), "SQpar"] <- "AreaPL/RatioFLPL"
+    df.tmp[which(df.tmp$Leafrank == (penultRank+1)), "SQpar"] <- "AreaPL/RatioFLPL"
+    sq.params$AreaPL <- unique(df.tmp[which(df.tmp$Leafrank == penultRank), "ConsensusArea"], na.rm=T)
+    sq.params$RatioFLPL <- unique(df.tmp[which(df.tmp$Leafrank == max(df.tmp$Leafrank, na.rm=T)), "ConsensusArea"], na.rm=T) /
+      unique(df.tmp[which(df.tmp$Leafrank == penultRank), "ConsensusArea"], na.rm=T)
+    if(unique(df.tmp[which(df.tmp$Leafrank == penultRank), "ConsensusArea"], na.rm=T) < 
+       unique(df.tmp[which(df.tmp$Leafrank == (penultRank+1)), "ConsensusArea"], na.rm=T)) {
+      sq.params$warn <- 1
+    }
+    
+    nbmax <- as.numeric(df.tmp %>%
+                          summarise(nbmax = mean(MaxLeaves, na.rm=T)))
+    nll_ranks <- c(penultRank, penultRank-1, penultRank-2, penultRank-3, penultRank-4)
+    df.tmp[which(df.tmp$Leafrank %in% nll_ranks),"SQpar"] <- "NLL"
+    lm.res <- lm(df.tmp[which(df.tmp$Leafrank %in% nll_ranks), "ConsensusArea"] ~ df.tmp[which(df.tmp$Leafrank %in% nll_ranks),"Leafrank"])
+    sq.params$NLL <- nbmax+coef(lm.res)[1]/coef(lm.res)[2]
+    sq.params$NLL_lm <- lm.res
+    df.tmp$inter_nll <- coef(sq.params$NLL_lm)[1]
+    df.tmp$slope_nll <- coef(sq.params$NLL_lm)[2]
+    if(!is.nan(mean(unique(df.tmp[which(df.tmp$Leafrank < -(coef(lm.res)[1]/coef(lm.res)[2])), "ConsensusArea"], na.rm=T), na.rm=T))) {
+      df.tmp[which(df.tmp$Leafrank < -(coef(lm.res)[1]/coef(lm.res)[2])),"SQpar"] <- "AreaSL"
+      sq.params$AreaSL <- mean(unique(df.tmp[which(df.tmp$Leafrank < -(coef(lm.res)[1]/coef(lm.res)[2])), "ConsensusArea"], na.rm=T), na.rm=T)
+    } else {
+      warn.sqpa(paste0(warn.sqpa(),"\nAreaSL was not computed \n as no rank <= nbmax-NLL was found"))
+    }
+    
+    df.lp.sq(df.tmp)
+    df.lp(df.tmp)
+    
+    df.tmp.init <- df.lp.init()
+    if(!("SQpar" %in% colnames(df.tmp.init))) {
+      df.tmp.init$SQpar <- "Not Used"
+      df.tmp.init$ConsensusArea <- NA 
+      df.tmp.init$inter_nll <- NA
+      df.tmp.init$slope_nll <- NA
+      df.tmp.init$warn <- 0
+    }
+    df.tmp.init[which(df.tmp.init$Variety == input$leafprofilevar &
+                        df.tmp.init$Irrigation == input$leafprofileirrig &
+                        df.tmp.init$Sowing == input$leafprofilesemis),] <- df.tmp
+    df.lp.init(df.tmp.init)
+  }
+})
 observeEvent(input$sqpar.val, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
+  df.tmp$SQpar <- "Not Used"
+  nbmax <- as.numeric(df.tmp %>%
+    summarise(nbmax = mean(MaxLeaves, na.rm=T)))
   if(nrow(df.tmp[which(df.tmp$sel == 13),]) == 0) {
     shinyalert("Error", 
                paste0("Please select points on the plot to compute SQ parameters"),
                type="error")
   } else {
+    mod.rows <- rownames(df.tmp[which(df.tmp$sel == 13),])
     switch(input$sqpar.sel, 
       "AreaPL" = {
-        sq.params$AreaPL <- mean(df.tmp[which(df.tmp$sel == 13),"Meanarea"], na.rm=T)
+        sq.params$AreaPL <- mean(df.tmp[which(df.tmp$sel == 13),"ConsensusArea"], na.rm=T)
+        df.tmp[which(df.tmp$sel == 13),"SQpar"] <- "AreaPL/RatioFLPL"
       },
       "AreaSL" = {
-        sq.params$AreaSL <- mean(df.tmp[which(df.tmp$sel == 13),"Meanarea"], na.rm=T)
+        sq.params$AreaSL <- mean(df.tmp[which(df.tmp$sel == 13),"ConsensusArea"], na.rm=T)
+        df.tmp[which(df.tmp$sel == 13),"SQpar"] <- "AreaSL"
       },
       "NLL" = {
-        lm.res <- lm(df.tmp[which(df.tmp$sel == 13),"Meanarea"] ~ df.tmp[which(df.tmp$sel == 13),"Leafrank"])
-        sq.params$NLL <- -coef(lm.res)[1]/coef(lm.res)[2]
+        lm.res <- lm(df.tmp[which(df.tmp$sel == 13),"ConsensusArea"] ~ df.tmp[which(df.tmp$sel == 13),"Leafrank"])
+        sq.params$NLL <- nbmax+coef(lm.res)[1]/coef(lm.res)[2]
         sq.params$NLL_lm <- lm.res
         nll.comp(TRUE)
+        df.tmp[which(df.tmp$sel == 13),"SQpar"] <- "NLL"
       },
       "RatioFLPL" = {
-        sq.params$RatioFLPL <- min(unique(df.tmp[which(df.tmp$sel == 13),"Meanarea"]),na.rm=T)/
-          max(unique(df.tmp[which(df.tmp$sel == 13),"Meanarea"]),na.rm=T)
+        penultRank <- min(unique(df.tmp[which(df.tmp$sel == 13), "Leafrank"]), na.rm=T)
+        flagRank <- max(unique(df.tmp[which(df.tmp$sel == 13), "Leafrank"]), na.rm=T)
+        sq.params$RatioFLPL <- unique(df.tmp[which(df.tmp$sel == 13 & 
+          df.tmp$Leafrank == flagRank),"ConsensusArea"])/
+          unique(df.tmp[which(df.tmp$sel == 13 & df.tmp$Leafrank == penultRank),
+          "ConsensusArea"])
+        df.tmp[which(df.tmp$sel == 13),"SQpar"] <- "AreaPL/RatioFLPL"
       }
     )
+    if(length(df.lp.sq()) == 0) {
+      df.lp.sq(df.tmp)
+    } else {
+      df.tmp2 <- df.lp.sq()
+      df.tmp2[which(rownames(df.tmp2) %in% mod.rows),] <- df.tmp[which(df.tmp$sel %in% c(3,6,13,15)),]
+      df.lp.sq(df.tmp2)
+    }
   }
 })
 observeEvent(input$sqpar.save, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   id <- paste(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis, sep="_")
   df.tmp <- df.sq()
+  nll.comp(FALSE)
   if(nrow(df.tmp) == 0) {
-    nll.comp(FALSE)
     df.tmp[1, "id"] <- id
     df.tmp[1, "AreaPL"] <- sq.params$AreaPL
     df.tmp[1, "AreaSL"] <- sq.params$AreaSL
     df.tmp[1, "NLL"] <- sq.params$NLL
     df.tmp[1, "RatioFLPL"] <- sq.params$RatioFLPL
+    df.tmp[1, "Warn"] <- sq.params$warn
   } else {
     if(id %in% df.tmp$id) {
       df.tmp[which(df.tmp$id == id), "AreaPL"] <- sq.params$AreaPL
       df.tmp[which(df.tmp$id == id), "AreaSL"] <- sq.params$AreaSL
       df.tmp[which(df.tmp$id == id), "NLL"] <- sq.params$NLL
       df.tmp[which(df.tmp$id == id), "RatioFLPL"] <- sq.params$RatioFLPL
+      df.tmp[which(df.tmp$id == id), "Warn"] <- sq.params$warn
     } else {
       df.tmp[nrow(df.tmp)+1, "id"] <- id
       df.tmp[nrow(df.tmp), "AreaPL"] <- sq.params$AreaPL
       df.tmp[nrow(df.tmp), "AreaSL"] <- sq.params$AreaSL
       df.tmp[nrow(df.tmp), "NLL"] <- sq.params$NLL
       df.tmp[nrow(df.tmp), "RatioFLPL"] <- sq.params$RatioFLPL
+      df.tmp[nrow(df.tmp), "Warn"] <- sq.params$warn
     }
   }
   df.sq(df.tmp)
+  
+  output$sq.plot <- renderPlot({
+    nameSQ <- c("AreaPL/RatioFLPL","AreaSL","NLL","Not Used")
+    idSQ <- c(13,6,15,16)
+    df.tmp <- df.lp.sq()
+    df.tmp$Date <- as.Date(df.tmp$Date, "%d/%m/%Y")
+    df.tmp$Date <- as.factor(df.tmp$Date)
+    df.tmp2 <- df.tmp %>%
+      summarise(nbmax = mean(MaxLeaves, na.rm=T))
+    if(input$meanmedian == "Median") {
+      plt <- ggplot(df.lp.sq(), aes(x = Leafrank, y = Medianarea, col = Date))
+      if(input$sduse) {
+        plt <- plt + geom_errorbar(aes(ymin=Medianarea-SDarea, 
+                                       ymax=Medianarea+SDarea))
+      }
+    } else {
+      plt <- ggplot(df.lp.sq(), aes(x = Leafrank, y = Meanarea, col = Date))
+      if(input$sduse) {
+        plt <- plt + geom_errorbar(aes(ymin=Meanarea-SDarea, 
+                                       ymax=Meanarea+SDarea))
+      }
+    }
+    plt <- plt + geom_point(aes(shape=as.factor(SQpar))) + geom_line() +
+      xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+      scale_x_continuous(breaks = function(x)
+        unique(floor(pretty(seq(0, (max(df.lp()$Leafrank,
+                                        na.rm=T)+1)*1.1))))) +
+      geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                 linetype = "dashed", col="red") +
+      scale_shape_manual(name = "SQ Params", labels = levels(as.factor((df.lp.sq()$SQpar))), values = idSQ[match(levels(as.factor((df.lp.sq()$SQpar))), nameSQ)]) +
+      theme(legend.position = "bottom", legend.box = "vertical", legend.title = element_blank(),
+            legend.text = element_text(size=6), legend.margin = margin())
+    # if(!is.na(sq.params$NLL)) {
+    #   plt <- plt + geom_abline(intercept = coef(sq.params$NLL_lm)[1], slope = coef(sq.params$NLL_lm)[2])
+    # }
+    #if(auto.sq() ||) {
+      plt <- plt + geom_line(aes(x = Leafrank, y = ConsensusArea), col="black", size=0.9)
+    #}
+    plt
+  }, height = 500, res = 150)
 })
 observeEvent(input$plot_click2, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -585,6 +723,9 @@ observeEvent(df.lp(), {
     if(nll.comp() == TRUE) {
       plt <- plt + geom_abline(intercept = coef(sq.params$NLL_lm)[1], slope = coef(sq.params$NLL_lm)[2])
     }
+    if(input$sqparA || "ConsensusArea" %in% colnames(df.lp())) {
+      plt <- plt + geom_line(aes(x = Leafrank, y = ConsensusArea), col="black", size=1.2)
+    }
     plt
   }, height = 500, res = 150)
 })
@@ -657,8 +798,11 @@ observeEvent(input$nextS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis) 
   nll.comp(FALSE)
+  auto.sq(FALSE)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
+  warn.sqpa("")
+  updateCheckboxInput(session, "sqparA", value = FALSE)
   if(input$leafprofilesemis == "S1") { # case 1 : change only sowing
     updateSelectizeInput(session, "leafprofilesemis", 
                          choices = unique(df.lp.init.o()$Sowing), 
@@ -686,8 +830,12 @@ observeEvent(input$previousS, {
   req(input$leafprofiledf, input$leafprofilevar, input$leafprofileirrig, 
       input$leafprofilesemis)
   nll.comp(FALSE)
+  auto.sq(FALSE)
   output$lp.selRank <- NULL
   output$lp.selPlant <- NULL
+  warn.sqpa("")
+  updateCheckboxInput(session, "sqparA", value = FALSE)
+  
   if(input$leafprofilesemis == "S2") { # case 1 : change only sowing
     updateSelectizeInput(session, "leafprofilesemis", 
                          choices = unique(df.lp.init.o()$Sowing), 
@@ -770,7 +918,10 @@ output$sqpar.text <- renderText({
         "NLL = ", sq.params$NLL, "\n",
         "RatioFLPL = ", sq.params$RatioFLPL)  
 })
-
+output$sqparA.text <- renderText({
+  paste0("Warning messages:", "\n", "\n",
+         warn.sqpa())  
+})
 output$downloadData <- downloadHandler(
   filename = function() {
     "leafprofile.csv"
@@ -795,19 +946,47 @@ output$downloadPlots <- downloadHandler(
   },
   content = function(file) {
     pdf(file)
-    for(v in unique(df.lp.init()$Variety)) {
-      df.tmp <- df.lp.init()[which(df.lp.init()$Variety == v),]
-      df.tmp2 <- df.tmp %>%
-        group_by(Sowing) %>%
-        summarise(nbmax = mean(MaxLeaves, na.rm=T))
-      plt <- ggplot(df.tmp, aes(x = Leafrank, y = Medianarea, 
-                                col = Date)) +
-        geom_line() + geom_point() + 
-        geom_vline(data=df.tmp2, aes(xintercept=nbmax),
-                   linetype = "dashed", col="red") +
-        facet_grid(Sowing ~ Irrigation) + 
-        ggtitle(v)
-      suppressWarnings(print(plt))
+    if(auto.sq() == FALSE) {
+      for(v in unique(df.lp.init()$Variety)) {
+        df.tmp <- df.lp.init()[which(df.lp.init()$Variety == v),]
+        df.tmp2 <- df.tmp %>%
+          group_by(Sowing) %>%
+          summarise(nbmax = mean(MaxLeaves, na.rm=T))
+        plt <- ggplot(df.tmp, aes(x = Leafrank, y = Medianarea, 
+                                  col = Date)) +
+          geom_line() + geom_point() + 
+          geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                     linetype = "dashed", col="red") +
+          facet_grid(Sowing ~ Irrigation) + 
+          ggtitle(v)
+        suppressWarnings(print(plt))
+      }
+    } else {
+      idSQ <- c(13,6,15,16)
+      nameSQ <- c("AreaPL/RatioFLPL","AreaSL","NLL","Not Used")
+      for(v in unique(df.lp.init()$Variety)) {
+        df.tmp <- df.lp.init()[which(df.lp.init()$Variety == v),]
+        df.tmp2 <- df.tmp %>%
+          group_by(Sowing) %>%
+          summarise(nbmax = mean(MaxLeaves, na.rm=T))
+        plt <- ggplot(df.tmp, aes(x = Leafrank, y = Medianarea, 
+                                  col = Date)) +
+          geom_point(aes(x = Leafrank, y = ConsensusArea, shape=as.factor(SQpar)), col="black") + geom_line() +
+          xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
+          scale_x_continuous(breaks = function(x)
+            unique(floor(pretty(seq(0, (max(df.lp()$Leafrank,
+                                            na.rm=T)+1)*1.1))))) +
+          geom_vline(data=df.tmp2, aes(xintercept=nbmax),
+                     linetype = "dashed", col="red") +
+          scale_shape_manual(name = "SQ Params", labels = levels(as.factor((df.lp.init()$SQpar))), values = idSQ[match(levels(as.factor((df.lp.init()$SQpar))), nameSQ)]) +
+          theme(legend.position = "bottom", legend.box = "vertical", legend.title = element_blank(),
+                legend.text = element_text(size=6), legend.margin = margin()) +
+          geom_line(aes(x = Leafrank, y = ConsensusArea), col="black", size=0.5) +
+          geom_abline(aes(intercept = inter_nll, slope = slope_nll), data = df.tmp, col="red") +
+          facet_grid(Sowing ~ Irrigation) + 
+          ggtitle(v)
+        suppressWarnings(print(plt))
+      }
     }
     dev.off()
   }
