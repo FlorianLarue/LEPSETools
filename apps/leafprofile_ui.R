@@ -31,6 +31,9 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
           textInput("cn.LeafNb", "Leaf number", value="N_Feuille"),
           textInput("cn.MaxLeaves", "Max number of leaves", value="nbmaxleaves")
         ),
+        splitLayout(
+          textInput("cn.Ligulated", "Ligulated", value="ligulated")
+        ),
         actionButton("cn.Submit", "Submit")
       )
     ),

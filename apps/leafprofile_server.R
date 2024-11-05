@@ -15,7 +15,7 @@ warn.sqpa <- reactiveVal()
 nll.comp <- reactiveVal(FALSE); auto.sq <- reactiveVal(FALSE)
 col.names <- reactiveVal(
   c("Variety","Sowing","Irrigation","Date","Leafrank","Leafarea","Medianarea",
-    "Meanarea","SDarea","PlantNb","LeafNb","MaxLeaves")
+    "Meanarea","SDarea","PlantNb","LeafNb","MaxLeaves", "Ligulated")
 )
 col.user <- reactiveVal()
 path.save <- reactiveVal()
@@ -33,13 +33,13 @@ updateLeafarea <- function(df, v, i, s, d) {
                        df$Date == d),]
   for(l in unique(df.tmp$Leafrank)) {
     df.tmp[which(df.tmp$Leafrank == l),"Medianarea"] <- 
-      median(df.tmp[which(df.tmp$Leafrank == l & df.tmp$ligulated == "x"), 
+      median(df.tmp[which(df.tmp$Leafrank == l & df.tmp$Ligulated == "x"), 
                     "Leafarea"], na.rm=T)
     df.tmp[which(df.tmp$Leafrank == l),"Meanarea"] <- 
-      mean(df.tmp[which(df.tmp$Leafrank == l & df.tmp$ligulated == "x"), 
+      mean(df.tmp[which(df.tmp$Leafrank == l & df.tmp$Ligulated == "x"), 
                   "Leafarea"], na.rm=T)
     df.tmp[which(df.tmp$Leafrank == l),"SDarea"] <- 
-      sd(df.tmp[which(df.tmp$Leafrank == l & df.tmp$ligulated == "x"), 
+      sd(df.tmp[which(df.tmp$Leafrank == l & df.tmp$Ligulated == "x"), 
                 "Leafarea"], na.rm=T)
   }
   df[which(df$Variety == v & df$Irrigation == i & df$Sowing == s &
@@ -101,7 +101,7 @@ observeEvent(input$cn.Submit, {
   for(n in col.names()) {
     names(df.tmp)[names(df.tmp) == input[[paste0("cn.", n)]]] <- n
   }
-  df.tmp <- df.tmp[order(df.tmp$Variety, df.tmp$Irrigation, df.tmp$Sowing),]
+  df.tmp <- df.tmp[order(df.tmp$Variety, df.tmp$Irrigation, df.tmp$Sowing, df.tmp$Date, df.tmp$PlantNb, df.tmp$Leafrank),]
   df.lp.init(df.tmp)
   df.lp.init.o(df.tmp)
   updateSelectizeInput(session, "leafprofilevar", 
@@ -206,7 +206,7 @@ observeEvent(input$plot_click, {
                                  df.pp$Irrigation == input$leafprofileirrig &
                                  df.pp$Sowing == input$leafprofilesemis &
                                  df.pp$Date == date.sel() & 
-                                 df.pp$iso == 1),]
+                                 df.pp$iso == 1 & df.pp$Ligulated == "x"),]
           df.tmp2 <- df.pp %>%
             summarise(nbmax = mean(MaxLeaves, na.rm=T))
           ggplot(df.pp, aes(x = Leafrank, y = Leafarea, 
@@ -557,18 +557,18 @@ observeEvent(input$inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
   for(i in unique(df.tmp[which(df.tmp$sel == 13),"Date"])) {
-    df.tmp.d <- df.tmp[which(df.tmp$sel == 13 & df.tmp$Date == i &
-                             df.tmp$ligulated == "x"),]
+    df.tmp.d <- df.tmp[which(df.tmp$sel == 13 & df.tmp$Date == i),]
     for(j in unique(df.tmp.d$PlantNb)) {
       df.tmp.d[which(df.tmp.d$PlantNb == j), "Leafrank"] <-
         rev(df.tmp.d[which(df.tmp.d$PlantNb == j), "Leafrank"])
     }
+    df.tmp[which(df.tmp$sel == 13 & df.tmp$Date == i),] <- df.tmp.d
     
+    df.tmp.d <- df.tmp[which(df.tmp$sel == 13 & df.tmp$Date == i & df.tmp$Ligulated == "x"),]
     df.tmp.d <- updateLeafarea(df.tmp.d, input$leafprofilevar, 
                                input$leafprofileirrig, input$leafprofilesemis,i)
-    
     df.tmp[which(df.tmp$sel == 13 & df.tmp$Date == i & 
-                   df.tmp$ligulated == "x"),] <- df.tmp.d
+                   df.tmp$Ligulated == "x"),] <- df.tmp.d
     
     updateHistory(input$leafprofilevar, input$leafprofilesemis, 
                   input$leafprofileirrig, i, "all", "all", "Inverse")
@@ -584,14 +584,14 @@ observeEvent(input$pp.inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
   df.tmp <- df.lp()
   
-  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$ligulated == "x" & 
+  for(i in unique(df.tmp[which(df.tmp$sel.p == 13 & df.tmp$Ligulated == "x" & 
                                df.tmp$Date == date.sel()), 
                          "PlantNb"])) {
     df.tmp[which(df.tmp$sel.p == 13 & df.tmp$PlantNb == i & 
-                 df.tmp$ligulated == "x" & df.tmp$Date == date.sel()), 
+                 df.tmp$Ligulated == "x" & df.tmp$Date == date.sel()), 
            "Leafrank"] <- rev(df.tmp[which(df.tmp$sel.p == 13 & 
                                            df.tmp$PlantNb == i & 
-                                           df.tmp$ligulated == "x"), 
+                                           df.tmp$Ligulated == "x"), 
                                      "Leafrank"])
   }
   
@@ -680,7 +680,7 @@ observeEvent(df.lp(), {
   output$lp.df <- DT::renderDataTable({
     DT::datatable(
       df.lp()[,c("Date","PlantNb","LeafNb","Leafarea","Medianarea",
-                 "Meanarea","SDarea","Leafrank","MaxLeaves")], 
+                 "Meanarea","SDarea","Leafrank","MaxLeaves", "Ligulated")], 
       extensions = "FixedColumns",
       options=list(dom="t", scollX=TRUE, scrollY="400px",pageLength=-1, 
                    fixedColumns=list(leftColumns = 3),
@@ -698,22 +698,22 @@ observeEvent(df.lp(), {
     df.tmp2 <- df.tmp %>%
       summarise(nbmax = mean(MaxLeaves, na.rm=T))
     if(input$meanmedian == "Median") {
-      plt <- ggplot(df.lp(), aes(x = Leafrank, y = Medianarea, col = Date))
+      plt <- ggplot(df.lp()[which(df.lp()$Ligulated == "x"),], aes(x = Leafrank, y = Medianarea, col = Date))
       if(input$sduse) {
         plt <- plt + geom_errorbar(aes(ymin=Medianarea-SDarea, 
                                        ymax=Medianarea+SDarea))
       }
     } else {
-      plt <- ggplot(df.lp(), aes(x = Leafrank, y = Meanarea, col = Date))
+      plt <- ggplot(df.lp()[which(df.lp()$Ligulated == "x"),], aes(x = Leafrank, y = Meanarea, col = Date))
       if(input$sduse) {
         plt <- plt + geom_errorbar(aes(ymin=Meanarea-SDarea, 
                                        ymax=Meanarea+SDarea))
       }
     }
-    plt <- plt + geom_point(shape=df.lp()$sel) + geom_line() +
+    plt <- plt + geom_point(shape=df.lp()[which(df.lp()$Ligulated == "x"),]$sel) + geom_line() +
       xlab("Estimated Leaf rank") + ylab("Leaf area (cm²)") +
       scale_x_continuous(breaks = function(x)
-        unique(floor(pretty(seq(0, (max(df.lp()$Leafrank,
+        unique(floor(pretty(seq(0, (max(df.lp()[which(df.lp()$Ligulated == "x"),]$Leafrank,
                                         na.rm=T)+1)*1.1))))) +
       geom_vline(data=df.tmp2, aes(xintercept=nbmax),
                  linetype = "dashed", col="red") +
