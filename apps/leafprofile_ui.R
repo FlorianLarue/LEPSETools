@@ -57,7 +57,9 @@ lp.tab1 <- tabItem(tabName = "leafprofile",
           checkboxInput("sduse", "Show standard deviation on plots ?",
                         value=FALSE),
           checkboxInput("ppplot", "Show individual plant plot ?",
-                        value=FALSE)
+                        value=FALSE),
+          checkboxInput("keepsel", "Keep selection after action ?",
+                        value=TRUE)
         ),
         column(width=12, align="center",
           actionButton("previousS", "Previous"),

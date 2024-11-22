@@ -494,11 +494,26 @@ observeEvent(input$leftshift, {
                   input$leafprofileirrig, i, "all", "all", "Left shift")
   }
   
-  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  if(!input$keepsel) {
+    df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+    output$lp.selRank <- NULL
+    output$lp.selPlant <- NULL
+    output$pp.plot <- NULL
+  } else {
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$Leafarea) &
+                                                  !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+  }
   df.lp(df.tmp)
-  output$lp.selRank <- NULL
-  output$lp.selPlant <- NULL
-  output$pp.plot <- NULL
 })
 observeEvent(input$pp.leftshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -529,11 +544,26 @@ observeEvent(input$rightshift, {
                   input$leafprofileirrig, i, "all", "all","Right shift")
   }
   
-  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  if(!input$keepsel) {
+    df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+    output$lp.selRank <- NULL
+    output$lp.selPlant <- NULL
+    output$pp.plot <- NULL
+  } else {
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$Leafarea) &
+                                                  !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+  }
   df.lp(df.tmp)
-  output$lp.selRank <- NULL
-  output$lp.selPlant <- NULL
-  output$pp.plot <- NULL
 })
 observeEvent(input$pp.rightshift, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -574,11 +604,26 @@ observeEvent(input$inverse, {
                   input$leafprofileirrig, i, "all", "all", "Inverse")
   }
   
-  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  if(!input$keepsel) {
+    df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+    output$lp.selRank <- NULL
+    output$lp.selPlant <- NULL
+    output$pp.plot <- NULL
+  } else {
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$Leafarea) &
+                                                  !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+  }
   df.lp(df.tmp)
-  output$lp.selRank <- NULL
-  output$lp.selPlant <- NULL
-  output$pp.plot <- NULL
 })
 observeEvent(input$pp.inverse, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis)
@@ -605,7 +650,22 @@ observeEvent(input$pp.inverse, {
                   "Inverse")
   }
   
-  df.tmp[which(df.tmp$sel.p == 13),"sel.p"] <- 16
+  if(!input$keepsel) {
+    df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  } else {
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$Leafarea) &
+                                                  !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+  }
   df.lp(df.tmp)
 })
 observeEvent(input$delrank, {
@@ -623,10 +683,26 @@ observeEvent(input$delrank, {
                   as.character(input$leafprofilerank), "Delete")
   }
   
-  df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+  if(!input$keepsel) {
+    df.tmp[which(df.tmp$sel == 13),"sel"] <- 16
+    output$lp.selRank <- NULL
+    output$lp.selPlant <- NULL
+    output$pp.plot <- NULL
+  } else {
+    # Create output to allow for rank selection and deletion
+    if(13 %in% df.tmp$sel) {
+      output$lp.selRank <- renderUI({
+        div(
+          selectizeInput(inputId = "leafprofilerank", 
+                         label = "Select a leaf rank", width = "100%",
+                         choices = df.tmp[which(df.tmp$sel == 13 & 
+                                                  !is.na(df.tmp$Leafarea) &
+                                                  !is.na(df.tmp$Leafrank)),"Leafrank"]),
+          actionButton("delrank", label="Delete rank", icon=icon("trash")))
+      }) 
+    }
+  }
   df.lp(df.tmp)
-  output$lp.selRank <- NULL
-  output$lp.selPlant <- NULL
 })
 observeEvent(input$delplant, {
   req(input$leafprofilevar, input$leafprofileirrig, input$leafprofilesemis,
@@ -670,8 +746,6 @@ observeEvent(input$pp.isolate, {
   } else {
     if(13 %in% df.tmp$sel.p) {
       df.tmp[which(df.tmp$sel.p == 16), "iso"] <- 0
-      output$lp.selRank <- NULL
-      output$lp.selPlant <- NULL
     }
   }
   df.lp(df.tmp)
