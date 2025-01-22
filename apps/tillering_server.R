@@ -237,7 +237,7 @@ df.til.sens <- reactiveVal()
 df.til.till <- reactiveVal({
   df.tmp <- data.frame(Phyllochron = 1:8, PNT = c(0, 0, fiboTiller(1:6)), 
                        PTT = fiboTiller(1:8), 
-                       SDi = c(1.8, 1.8, seq(1.8, 0.8, -0.2)), 
+                       SDi = c(1.8, 1.8, seq(1.8, 0.8, -0.2)),
                        NT = rep(0, 8), TT = rep(1, 8))
   df.tmp
 })
