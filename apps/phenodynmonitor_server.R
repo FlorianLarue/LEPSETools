@@ -222,6 +222,21 @@ observeEvent(input$pm.Generate, {
       if(!is.na(h)) {
         data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$RDT == h),]
         
+        # Ajouter paer Marine JANNIN le 05/06/2026 afin pour l'experimentation TA26 car je souhaite afficher la ligne qui fait planter la generation des fichiersr 
+        plante <- unique(data.tmp$Plante)                                       # Marine JANNIN le 05/06/2026
+        site <- unique(data.tmp$site)                                           # Marine JANNIN le 05/06/2026
+        organe <- unique(data.tmp$organe)                                        # Marine JANNIN le 05/06/2026
+        
+        if(length(plante) > 1)
+          stop(paste("RDT", h, ": plusieurs plantes"))
+        
+        if(length(site) > 1)
+          stop(paste("RDT", h, ": plusieurs sites"))
+        
+        if(length(organe) > 1)
+          stop(paste("RDT", h, ": plusieurs organes"))                          # Marine JANNIN le 05/06/2026
+        
+        
         df1.tmp[nrow(df1.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
         df1.tmp[nrow(df1.tmp), "numPlante"] <- unique(data.tmp$Plante)
         df1.tmp[nrow(df1.tmp), "nomCapteur"] <- paste0(h, "_" , unique(data.tmp$site))
@@ -235,11 +250,50 @@ observeEvent(input$pm.Generate, {
     dbFiles$growth <- df1.tmp
     
     # File 2 : Periode Measure Balance
+    
     df2.tmp <- data.frame()
     for(i in unique(excelFiles$notationMesure$NumPotBDD)) {
-      if(!is.na(i)) {
-        data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$NumPotBDD == i),]
-
+      # Modifier par Marine JANNIN le 01/06/2026 pour l'experimentation TA26 car il y a des numPotBDD qui n'ont pas de balance attribuer du fait du design experimental
+      # if(!is.na(i)) {
+      #   data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$NumPotBDD == i),] # Marine JANNIN le 01/06/2026
+      if(!is.na(i)) {                                                           # Marine JANNIN le 01/06/2026
+        
+        data.tmp <- excelFiles$notationMesure[                                  # Marine JANNIN le 01/06/2026
+          which(excelFiles$notationMesure$NumPotBDD == i),]                     # Marine JANNIN le 01/06/2026
+        
+        bal <- unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""])  # Marine JANNIN le 01/06/2026
+        
+        if(length(bal) == 0) {                                                  # Marine JANNIN le 01/06/2026
+          next                                                                  # Marine JANNIN le 01/06/2026
+        }                                                                       # Marine JANNIN le 01/06/2026
+        
+        # Ajouter par Marine JANNIN le 05/06/2026 afin pour l'experimentation TA26 car je souhaite afficher la ligne qui fait planter la generation des fichiers
+        site <- unique(data.tmp$site[!is.na(data.tmp$site) & data.tmp$site != ""]) # Marine JANNIN le 05/06/2026
+        traitement <- unique(data.tmp$traitement[!is.na(data.tmp$traitement) & data.tmp$traitement != ""]) # Marine JANNIN le 05/06/2026
+        
+        if(length(site) > 1) {                                                  # Marine JANNIN le 05/06/2026
+          stop(paste(                                                           
+            "Erreur : le NumPotBDD", i,
+            "est associé à plusieurs sites :",
+            paste(site, collapse = ", ")
+          ))
+        }                                                                       # Marine JANNIN le 05/06/2026
+        
+        if(length(traitement) > 1) {                                            # Marine JANNIN le 05/06/2026
+          stop(paste(
+            "Erreur : le NumPotBDD", i,
+            "est associé à plusieurs traitements :",
+            paste(traitement, collapse = ", ")
+          ))
+        }                                                                       # Marine JANNIN le 05/06/2026
+        
+        if(length(bal) > 1) {
+          stop(paste(
+            "Erreur : le NumPotBDD", i,
+            "est associé à plusieurs balances :",
+            paste(bal, collapse = ", ")
+          ))
+        }                                                                       # Marine JANNIN le 05/06/2026
         df2.tmp[nrow(df2.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
         df2.tmp[nrow(df2.tmp), "numPot"] <- i
         if(nchar(unique(data.tmp$Bal[!is.na(data.tmp$Bal) & data.tmp$Bal != ""])) == 1) {
@@ -262,6 +316,15 @@ observeEvent(input$pm.Generate, {
     for(j in unique(excelFiles$notationMesure$TC)) {
       if(!is.na(j)) {
         data.tmp <- excelFiles$notationMesure[which(excelFiles$notationMesure$TC == j),]
+        # Ajouter pa r Marine JANNIN le 05/06/2026 afin pour l'experimentation TA26 car je souhaite afficher la ligne qui fait planter la generation des fichiers
+        if(length(traitement) > 1) {                                            # Marine JANNIN le 05/06/2026
+          stop(paste(
+            "TC", j,
+            ": plusieurs traitements :",
+            paste(traitement, collapse = ", ")
+          ))
+        }                                                                       # Marine JANNIN le 05/06/2026
+        
         df3.tmp[nrow(df3.tmp)+1, "codeManip"] <- excelFiles$dateMesure[1, "CodeManip"]
         df3.tmp[nrow(df3.tmp), "numPlante"] <- unique(data.tmp$Plante)
         if(nchar(j) == 1) {

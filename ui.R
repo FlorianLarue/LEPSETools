@@ -76,7 +76,7 @@ shinyUI(
       
       footer = dashboardFooter(
         left = "MAGE, LEPSE, INRAe",
-        right = "By Florian Larue"
+        right = "By Florian Larue | Updates by Marine Jannin"
       )
     )
   }
